@@ -2,7 +2,29 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
-First, run the development server:
+### 1. Environment Setup
+
+Create a `.env.local` file in the root directory with your Cloudinary credentials:
+
+```bash
+# Cloudinary Configuration
+NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+```
+
+### 2. Cloudinary Setup
+
+1. **Sign up for Cloudinary** (free tier): https://cloudinary.com/
+2. **Get your credentials** from the Dashboard
+3. **Update environment variables** with your credentials
+4. **Free tier includes:**
+   - 25 GB storage
+   - 25 GB bandwidth
+   - 25 GB transformations
+   - Unlimited uploads
+
+### 3. Development Server
 
 ```bash
 npm run dev
