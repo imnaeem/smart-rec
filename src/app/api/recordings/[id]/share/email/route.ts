@@ -4,7 +4,7 @@ import { RecordingService } from "@/lib/firebase/recordings";
 // Add email to recording share list
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const authHeader = request.headers.get("authorization");
@@ -61,7 +61,7 @@ export async function POST(
 // Remove email from recording share list
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const authHeader = request.headers.get("authorization");

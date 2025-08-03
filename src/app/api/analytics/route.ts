@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
     );
 
     // Views over time (last 30 days) - show actual user activity only
-    const viewsTimeline = [];
+    const viewsTimeline: Array<{ date: string; views: number }> = [];
 
     // Initialize all days with 0 views
     for (let i = 29; i >= 0; i--) {
@@ -94,7 +94,7 @@ export async function GET(request: NextRequest) {
     );
 
     // Recordings by month (last 12 months)
-    const recordingsByMonth = [];
+    const recordingsByMonth: Array<{ month: string; count: number }> = [];
     for (let i = 11; i >= 0; i--) {
       const date = new Date();
       date.setMonth(date.getMonth() - i);

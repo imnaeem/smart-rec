@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Container, Box, Typography, Card, CardContent } from "@mui/material";
 import Link from "next/link";
 import { LoginForm } from "@/components/auth/login-form";
 import { useAuth } from "@/contexts/auth-context";
 
-export default function LoginPage() {
+function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
@@ -105,5 +105,13 @@ export default function LoginPage() {
         </Box>
       </Container>
     </Box>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <LoginPageContent />
+    </Suspense>
   );
 }

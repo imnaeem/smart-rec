@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Navbar } from "@/components/sections/navbar";
 import { Footer } from "@/components/sections/footer";
 import {
@@ -20,16 +20,43 @@ import { notFound } from "next/navigation";
 import { blogPosts } from "@/lib/data/blog-posts";
 
 interface BlogPostPageProps {
-  params: {
+  params: Promise<{
     slug: string;
-  };
+  }>;
 }
 
 export default function BlogPostPage({ params }: BlogPostPageProps) {
   const [shareSuccess, setShareSuccess] = useState(false);
   const [shareText, setShareText] = useState("Share Article");
+  const [post, setPost] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  const post = blogPosts.find((p) => p.slug === params.slug);
+  useEffect(() => {
+    const loadPost = async () => {
+      const { slug } = await params;
+      const foundPost = blogPosts.find((p) => p.slug === slug);
+      if (!foundPost) {
+        notFound();
+      }
+      setPost(foundPost);
+      setLoading(false);
+    };
+    loadPost();
+  }, [params]);
+
+  if (loading) {
+    return (
+      <>
+        <Navbar />
+        <main>
+          <Container maxWidth="lg" sx={{ py: 8 }}>
+            <Typography>Loading...</Typography>
+          </Container>
+        </main>
+        <Footer />
+      </>
+    );
+  }
 
   if (!post) {
     notFound();

@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     const uploadOptions = {
       public_id: publicId,
       folder: folder,
-      resource_type: resourceType,
+      resource_type: resourceType as "video",
       context: {
         userId,
         title: metadata.title || "Untitled Recording",

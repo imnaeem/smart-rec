@@ -3,7 +3,7 @@ import { RecordingService } from "@/lib/firebase/recordings";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id: recordingId } = await params;
@@ -34,9 +34,9 @@ export async function GET(
 
     // Add shared users
     if (recording.sharedWith && Array.isArray(recording.sharedWith)) {
-      recording.sharedWith.forEach((sharedUser: { userId?: string }) => {
-        if (sharedUser.userId && !recipients.includes(sharedUser.userId)) {
-          recipients.push(sharedUser.userId);
+      recording.sharedWith.forEach((sharedUser: { uid: string }) => {
+        if (sharedUser.uid && !recipients.includes(sharedUser.uid)) {
+          recipients.push(sharedUser.uid);
         }
       });
     }

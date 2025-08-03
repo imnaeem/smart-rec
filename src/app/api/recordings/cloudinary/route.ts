@@ -49,8 +49,8 @@ export async function POST(request: NextRequest) {
       {
         title,
         description,
-        recordingType: recordingType || "screen",
-        quality: quality || "720p",
+        recordingType: recordingType as "screen" | "window" | "tab",
+        quality: quality as "720p" | "1080p" | "4k",
         fps,
         hasMicrophone,
         hasAudio,
@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
 
     const recordingId = await RecordingService.createRecording(
       userId,
-      recordingData
+      recordingData as any
     );
 
     return NextResponse.json(

@@ -2,13 +2,14 @@ import { Metadata } from "next";
 import { generateRecordingMetadata } from "@/lib/utils/metadata";
 
 type Props = {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   try {
+    const { id } = await params;
     // Try to fetch recording data for dynamic title
-    const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/recordings/public/${params.id}`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/recordings/public/${id}`, {
       cache: 'no-store'
     });
     

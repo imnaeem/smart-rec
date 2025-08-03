@@ -3,14 +3,15 @@ import { blogPosts } from "@/lib/data/blog-posts";
 import { generateBlogPostMetadata } from "@/lib/utils/metadata";
 
 type Props = {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const post = blogPosts.find(post => post.slug === params.slug);
+  const { slug } = await params;
+  const post = blogPosts.find(post => post.slug === slug);
   
   if (post) {
-    return generateBlogPostMetadata(post);
+    return generateBlogPostMetadata(post as any);
   }
 
   return {

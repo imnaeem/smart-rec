@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   Box,
@@ -453,7 +453,7 @@ function RecordingCard({
   );
 }
 
-export default function RecordingsPage() {
+function RecordingsPageContent() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -1197,5 +1197,13 @@ export default function RecordingsPage() {
         </Dialog>
       </Box>
     </DashboardLayout>
+  );
+}
+
+export default function RecordingsPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <RecordingsPageContent />
+    </Suspense>
   );
 }

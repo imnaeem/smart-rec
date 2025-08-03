@@ -23,7 +23,7 @@ async function verifyAuth(request: NextRequest) {
 // Update recording sharing settings (public/private)
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await verifyAuth(request);
