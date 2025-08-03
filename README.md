@@ -1,58 +1,68 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SmartRec - Screen Recording Platform
+
+A modern screen recording platform built with Next.js and Firebase, inspired by Loom. Record, edit, and share your screen recordings with ease.
+
+## Features
+
+- 🎥 **Screen Recording**: Record your screen, window, or browser tab
+- ✂️ **Video Editing**: Trim and edit recordings with built-in tools
+- 🔗 **Easy Sharing**: Share recordings via email or public links
+- 💬 **Real-time Chat**: Collaborate with comments on recordings
+- 📱 **Mobile Friendly**: Responsive design for all devices
+- ☁️ **Cloud Storage**: Secure storage with Cloudinary integration
+- 🔐 **Authentication**: Secure user authentication with Firebase
+
+## Tech Stack
+
+- **Frontend**: Next.js 15, React 19, TypeScript
+- **Styling**: Tailwind CSS, Material-UI
+- **Backend**: Firebase (Firestore, Storage, Realtime Database)
+- **Video Processing**: Cloudinary
+- **Authentication**: Firebase Auth
+- **Deployment**: Vercel
 
 ## Getting Started
 
-### 1. Environment Setup
+1. Clone the repository
+2. Install dependencies: `npm install`
+3. Set up environment variables (see `.env.example`)
+4. Run development server: `npm run dev`
+5. Open [http://localhost:3000](http://localhost:3000)
 
-Create a `.env.local` file in the root directory with your Cloudinary credentials:
+## Environment Variables
 
-```bash
-# Cloudinary Configuration
-NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=your_cloud_name
-CLOUDINARY_API_KEY=your_api_key
-CLOUDINARY_API_SECRET=your_api_secret
+Create a `.env.local` file with:
+
+```env
+NEXT_PUBLIC_FIREBASE_API_KEY=your_firebase_api_key
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_firebase_auth_domain
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_firebase_project_id
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_firebase_storage_bucket
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
+NEXT_PUBLIC_FIREBASE_APP_ID=your_firebase_app_id
+NEXT_PUBLIC_FIREBASE_DATABASE_URL=your_firebase_database_url
+
+NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
+CLOUDINARY_API_KEY=your_cloudinary_api_key
+CLOUDINARY_API_SECRET=your_cloudinary_api_secret
+
+SMTP_HOST=your_smtp_host
+SMTP_PORT=your_smtp_port
+SMTP_USER=your_smtp_user
+SMTP_PASS=your_smtp_password
 ```
 
-### 2. Cloudinary Setup
+## Scripts
 
-1. **Sign up for Cloudinary** (free tier): https://cloudinary.com/
-2. **Get your credentials** from the Dashboard
-3. **Update environment variables** with your credentials
-4. **Free tier includes:**
-   - 25 GB storage
-   - 25 GB bandwidth
-   - 25 GB transformations
-   - Unlimited uploads
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run start` - Start production server
+- `npm run lint` - Run ESLint
 
-### 3. Development Server
+## License
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+MIT License - see LICENSE file for details
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Author
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Muhammad Naeem
