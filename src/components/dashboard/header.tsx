@@ -11,16 +11,23 @@ import {
   ListItemIcon,
   ListItemText,
   Divider,
+  Badge,
+  ClickAwayListener,
 } from "@mui/material";
-import { Video, User, Settings, LogOut, Bell } from "lucide-react";
+import { Video, Settings, LogOut, Bell } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
+import { useNotifications } from "@/contexts/notification-context";
+import { NotificationDropdown } from "@/components/notifications/notification-dropdown";
 import { useRouter, usePathname } from "next/navigation";
 
 export function DashboardHeader() {
   const { user, logout } = useAuth();
+  const { unreadCount, notifications, markAsRead, markAllAsRead } =
+    useNotifications();
   const router = useRouter();
   const pathname = usePathname();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [showNotifications, setShowNotifications] = useState(false);
 
   // Get page-specific title and description
   const getPageInfo = () => {
@@ -81,6 +88,28 @@ export function DashboardHeader() {
     handleMenuClose();
   };
 
+  const handleNotificationClick = () => {
+    setShowNotifications(!showNotifications);
+  };
+
+  const handleNotificationClose = () => {
+    setShowNotifications(false);
+  };
+
+  const handleNotificationItemClick = (notification: {
+    id: string;
+    recordingId: string;
+  }) => {
+    // Mark notification as read
+    markAsRead(notification.id);
+
+    // Navigate to recordings page and open the video
+    router.push(`/dashboard/recordings?open=${notification.recordingId}`);
+
+    // Close notification dropdown
+    setShowNotifications(false);
+  };
+
   return (
     <Box
       sx={{
@@ -129,21 +158,57 @@ export function DashboardHeader() {
         </Button>
 
         {/* Notifications */}
-        <Box
-          sx={{
-            width: 40,
-            height: 40,
-            borderRadius: "50%",
-            backgroundColor: "#f8fafc",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            cursor: "pointer",
-            "&:hover": { backgroundColor: "#f1f5f9" },
-          }}
-        >
-          <Bell size={18} color="#6b7280" />
-        </Box>
+        <ClickAwayListener onClickAway={handleNotificationClose}>
+          <Box sx={{ position: "relative" }}>
+            <Badge
+              badgeContent={unreadCount}
+              color="error"
+              max={99}
+              sx={{
+                "& .MuiBadge-badge": {
+                  fontSize: "0.7rem",
+                  minWidth: 18,
+                  height: 18,
+                },
+              }}
+            >
+              <Box
+                onClick={handleNotificationClick}
+                sx={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: "50%",
+                  backgroundColor: showNotifications ? "#e0f2fe" : "#f8fafc",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: "pointer",
+                  transition: "all 0.2s ease",
+                  "&:hover": {
+                    backgroundColor: showNotifications ? "#bae6fd" : "#f1f5f9",
+                    transform: "scale(1.05)",
+                  },
+                }}
+              >
+                <Bell
+                  size={18}
+                  color={showNotifications ? "#0284c7" : "#6b7280"}
+                />
+              </Box>
+            </Badge>
+
+            {/* Notification Dropdown */}
+            {showNotifications && (
+              <NotificationDropdown
+                notifications={notifications}
+                onNotificationClick={handleNotificationItemClick}
+                onMarkAsRead={markAsRead}
+                onMarkAllAsRead={markAllAsRead}
+                onClose={handleNotificationClose}
+              />
+            )}
+          </Box>
+        </ClickAwayListener>
 
         {/* User Menu */}
         <Avatar

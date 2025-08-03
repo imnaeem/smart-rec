@@ -21,7 +21,6 @@ export interface CloudinaryVideoPlayerProps {
   onEnded?: () => void;
 }
 
-const elementId = "cloudinary-player";
 const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
 
 export function CloudinaryVideoPlayer({
@@ -37,22 +36,69 @@ export function CloudinaryVideoPlayer({
   onEnded,
 }: CloudinaryVideoPlayerProps) {
   const [error, setError] = useState<string | null>(null);
+  const [isPlayerReady, setIsPlayerReady] = useState(false);
   const playerRef = useRef<VideoPlayer | null>(null);
-
+  const videoElementRef = useRef<HTMLVideoElement>(null);
+  const elementIdRef = useRef(
+    `cloudinary-player-${Math.random().toString(36).substr(2, 9)}`
+  );
+  const isInitializingRef = useRef(false);
   useEffect(() => {
     const initializePlayer = async () => {
       try {
         if (typeof window === "undefined") return;
 
+        // Don't re-initialize if player already exists or is being initialized
+        if (playerRef.current || isInitializingRef.current) {
+          console.log(
+            "Player already initialized or initializing, skipping..."
+          );
+          return;
+        }
+
+        isInitializingRef.current = true;
+
+        // Wait for the DOM element to be available
+        const elementId = elementIdRef.current;
+        const element =
+          videoElementRef.current || document.getElementById(elementId);
+        if (!element) {
+          console.warn("Video element not found, waiting...");
+          isInitializingRef.current = false;
+          return;
+        }
+
+        // Clear any existing cloudinary player on this element
+        try {
+          const existingPlayer = (
+            window as Record<string, any>
+          ).cloudinary?.videoPlayer?.(elementId);
+          if (existingPlayer && typeof existingPlayer.dispose === "function") {
+            existingPlayer.dispose();
+          }
+        } catch {
+          // Ignore cleanup errors
+        }
+
         const [cloudinaryModule] = await Promise.all([
           import("cloudinary-video-player"),
         ]);
+
         if (!publicId) {
           setError("Failed to load video");
+          isInitializingRef.current = false;
           return;
         }
 
         const cloudinary = cloudinaryModule.default;
+
+        // Double-check element still exists before initializing
+        const finalElement = document.getElementById(elementId);
+        if (!finalElement) {
+          console.error("Element disappeared before initialization");
+          isInitializingRef.current = false;
+          return;
+        }
 
         const player = cloudinary.videoPlayer(elementId, {
           cloudName,
@@ -66,25 +112,52 @@ export function CloudinaryVideoPlayer({
         });
 
         player.controls(true);
-        player.loop(true);
+        player.loop(false); // Don't loop by default
 
         playerRef.current = player;
+        setIsPlayerReady(true);
+        setError(null);
+        isInitializingRef.current = false;
       } catch (error) {
         console.error("Error initializing player:", error);
         setError("Failed to initialize video player");
+        isInitializingRef.current = false;
       }
     };
 
-    // Initialize with a small delay to ensure DOM is ready
-    const timer = setTimeout(() => {
-      initializePlayer().catch((error) => {
-        console.error("Failed to initialize player:", error);
-        setError("Failed to load video player");
-      });
-    }, 100);
+    let retryCount = 0;
+    const maxRetries = 20; // Maximum 1 second of retries (20 * 50ms)
+    let retryTimer: NodeJS.Timeout | null = null;
+
+    // Check for element availability with retries
+    const checkAndInitialize = () => {
+      const elementId = elementIdRef.current;
+      const element =
+        videoElementRef.current || document.getElementById(elementId);
+      if (element && publicId) {
+        initializePlayer().catch((error) => {
+          console.error("Failed to initialize player:", error);
+          setError("Failed to load video player");
+        });
+      } else if (retryCount < maxRetries) {
+        retryCount++;
+        // Retry after a short delay if element isn't ready
+        retryTimer = setTimeout(checkAndInitialize, 50);
+      } else {
+        console.error("Max retries reached, could not find video element");
+        setError("Failed to initialize video player - element not found");
+        isInitializingRef.current = false;
+      }
+    };
+
+    // Start checking after a brief initial delay
+    const timer = setTimeout(checkAndInitialize, 10);
 
     return () => {
       clearTimeout(timer);
+      if (retryTimer) {
+        clearTimeout(retryTimer);
+      }
       if (
         playerRef.current &&
         typeof playerRef.current.dispose === "function"
@@ -96,17 +169,10 @@ export function CloudinaryVideoPlayer({
           console.warn("Error disposing player:", e);
         }
       }
+      setIsPlayerReady(false);
+      isInitializingRef.current = false;
     };
-  }, [
-    publicId,
-    autoPlay,
-    controls,
-    onTimeUpdate,
-    onDuration,
-    onPlay,
-    onPause,
-    onEnded,
-  ]);
+  }, [publicId]); // Only re-run when publicId changes
 
   if (error) {
     return (
@@ -156,8 +222,10 @@ export function CloudinaryVideoPlayer({
         },
       }}
     >
+      {/* Video element - always rendered to prevent DOM manipulation issues */}
       <video
-        id={elementId}
+        ref={videoElementRef}
+        id={elementIdRef.current}
         className="cld-video-player cld-fluid vjs-default-skin"
         tabIndex={0}
       />

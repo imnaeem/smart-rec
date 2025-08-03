@@ -12,13 +12,19 @@ import {
   Chip,
   Stack,
   Alert,
+  Tabs,
+  Tab,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
-import { ExternalLink, Share, X } from "lucide-react";
+import { ExternalLink, Share, X, MessageCircle, Info } from "lucide-react";
 
 import type { Recording } from "@/lib/types/recording";
 import { CloudinaryVideoPlayer } from "./cloudinary-video-player-wrapper";
 import ShareRecordingDialog from "./share-recording-dialog";
+import { VideoChatPanel } from "../chat/video-chat-panel";
 import { useAuth } from "@/contexts/auth-context";
+import { useNotifications } from "@/contexts/notification-context";
 
 // ReactPlayer removed - using native HTML5 player only
 
@@ -38,11 +44,24 @@ export function VideoPlayerModal({
   onRecordingUpdate,
 }: VideoPlayerModalProps) {
   const { user } = useAuth();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const { setCurrentVideo } = useNotifications();
   const [error, setError] = useState<string | null>(null);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState(0); // 0 = Info, 1 = Chat
 
   // Track if view count has been incremented for this session
   const viewCountIncrementedRef = useRef(false);
+
+  // Track current video for notifications
+  useEffect(() => {
+    if (open && recording) {
+      setCurrentVideo(recording.id);
+    } else {
+      setCurrentVideo(null);
+    }
+  }, [open, recording, setCurrentVideo]);
 
   // Increment view count when video starts playing
   const incrementViewCount = useCallback(async () => {
@@ -81,6 +100,7 @@ export function VideoPlayerModal({
     if (open && recording) {
       setError(null);
       viewCountIncrementedRef.current = false; // Reset view count flag
+      setActiveTab(0); // Reset to info tab on mobile
     }
   }, [open, recording]);
 
@@ -91,20 +111,16 @@ export function VideoPlayerModal({
     }
   }, [open, recording, incrementViewCount]);
 
-  // Keyboard shortcuts
+  // Keyboard shortcuts - only ESC to close
   useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent) => {
       if (!open) return;
 
-      switch (event.key.toLowerCase()) {
-        case " ":
-        case "k":
-          event.preventDefault();
-          break;
-        case "escape":
-          event.preventDefault();
-          onClose();
-          break;
+      // Only handle ESC key, ignore space/k so they work in chat input
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setCurrentVideo(null); // Clear current video when closing
+        onClose();
       }
     };
 
@@ -112,7 +128,7 @@ export function VideoPlayerModal({
       document.addEventListener("keydown", handleKeyPress);
       return () => document.removeEventListener("keydown", handleKeyPress);
     }
-  }, [open, onClose]);
+  }, [open, onClose, setCurrentVideo]);
 
   if (!recording) return null;
 
@@ -153,7 +169,7 @@ export function VideoPlayerModal({
     <Dialog
       open={open}
       onClose={onClose}
-      maxWidth="lg"
+      maxWidth="xl"
       fullWidth
       PaperProps={{
         sx: {
@@ -161,10 +177,22 @@ export function VideoPlayerModal({
           color: "white",
           borderRadius: 3,
           overflow: "hidden",
+          height: "90vh",
+          maxHeight: "90vh",
         },
       }}
     >
-      <DialogContent sx={{ p: 0, position: "relative" }}>
+      <DialogContent
+        sx={{
+          p: 0,
+          position: "relative",
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+          flex: 1,
+        }}
+      >
         {/* Close button */}
         <IconButton
           onClick={onClose}
@@ -181,149 +209,317 @@ export function VideoPlayerModal({
           <X size={20} />
         </IconButton>
 
-        {/* Modern Video Player */}
+        {/* Main Content Area - YouTube-style Layout */}
         <Box
           sx={{
-            position: "relative",
-            backgroundColor: "#000",
-            aspectRatio: "16/9",
+            flex: 1,
             display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+            flexDirection: isMobile ? "column" : "row",
             overflow: "hidden",
-            minHeight: "400px",
-            "& > div": {
-              borderRadius: 0,
-            },
-            "& video": {
-              display: "block !important",
-              visibility: "visible !important",
-              opacity: "1 !important",
-            },
+            gap: 0,
           }}
         >
-          {/* Error State */}
-          {error && (
-            <Alert
-              severity="error"
+          {/* Left Side: Video and Info Content */}
+          <Box
+            sx={{
+              width: isMobile ? "100%" : "calc(100% - 380px)",
+              display: "flex",
+              flexDirection: "column",
+              minWidth: 0,
+              overflow: "hidden",
+            }}
+          >
+            {/* Video Player */}
+            <Box
               sx={{
-                position: "absolute",
-                top: "50%",
-                left: "50%",
-                transform: "translate(-50%, -50%)",
-                zIndex: 1,
-                maxWidth: "80%",
+                position: "relative",
+                backgroundColor: "#000",
+                aspectRatio: "16/9",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                overflow: "hidden",
+                height: isMobile ? "250px" : "450px",
+                maxHeight: isMobile ? "250px" : "450px",
+                "& > div": {
+                  borderRadius: 0,
+                },
+                "& video": {
+                  display: "block !important",
+                  visibility: "visible !important",
+                  opacity: "1 !important",
+                },
               }}
             >
-              Failed to load video: {error}
-            </Alert>
-          )}
+              {/* Error State */}
+              {error && (
+                <Alert
+                  severity="error"
+                  sx={{
+                    position: "absolute",
+                    top: "50%",
+                    left: "50%",
+                    transform: "translate(-50%, -50%)",
+                    zIndex: 1,
+                    maxWidth: "80%",
+                  }}
+                >
+                  Failed to load video: {error}
+                </Alert>
+              )}
 
-          <CloudinaryVideoPlayer
-            publicId={recording.cloudinaryPublicId}
-            width={800}
-            height={450}
-            autoPlay={true}
-            controls={true}
-            onTimeUpdate={(currentTime) => {
-              // Handle time updates if needed
-            }}
-            onDuration={(duration) => {
-              // Handle duration updates if needed
-            }}
-            onPlay={() => {
-              setError(null);
-            }}
-            onPause={() => {}}
-          />
-        </Box>
+              <CloudinaryVideoPlayer
+                publicId={recording.cloudinaryPublicId}
+                width={isMobile ? 400 : 700}
+                height={isMobile ? 225 : 400}
+                autoPlay={true}
+                controls={true}
+                onTimeUpdate={() => {
+                  // Handle time updates if needed
+                }}
+                onDuration={() => {
+                  // Handle duration updates if needed
+                }}
+                onPlay={() => {
+                  setError(null);
+                }}
+                onPause={() => {}}
+              />
+            </Box>
 
-        {/* Video info */}
-        <Box sx={{ p: 3, backgroundColor: "white", color: "#1a1a1a" }}>
-          <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
-            {recording.title}
-          </Typography>
+            {/* Action Buttons - Below Video */}
+            {!isMobile && (
+              <Box
+                sx={{
+                  px: 3,
+                  py: 2,
+                  backgroundColor: "white",
+                  borderBottom: "1px solid #e0e0e0",
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  gap: 1,
+                }}
+              >
+                <Button
+                  startIcon={<ExternalLink size={16} />}
+                  onClick={handleOpenInNewTab}
+                  variant="outlined"
+                  size="small"
+                  sx={{
+                    borderColor: "#e0e0e0",
+                    color: "#666",
+                    "&:hover": {
+                      borderColor: "#666",
+                      backgroundColor: "#f5f5f5",
+                    },
+                  }}
+                >
+                  OPEN
+                </Button>
+                {canShare && (
+                  <Button
+                    startIcon={<Share size={16} />}
+                    onClick={handleShare}
+                    variant="outlined"
+                    size="small"
+                    sx={{
+                      borderColor: "#e0e0e0",
+                      color: "#666",
+                      "&:hover": {
+                        borderColor: "#666",
+                        backgroundColor: "#f5f5f5",
+                      },
+                    }}
+                  >
+                    SHARE
+                  </Button>
+                )}
+                <Button
+                  onClick={onClose}
+                  variant="contained"
+                  size="small"
+                  sx={{
+                    backgroundColor: "#7c3aed",
+                    color: "white",
+                    fontWeight: 600,
+                    "&:hover": {
+                      backgroundColor: "#6d28d9",
+                    },
+                  }}
+                >
+                  CLOSE
+                </Button>
+              </Box>
+            )}
 
-          {recording.description && (
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-              {recording.description}
-            </Typography>
-          )}
+            {/* Mobile Tabs */}
+            {isMobile && (
+              <Box
+                sx={{
+                  backgroundColor: "white",
+                  borderBottom: "1px solid #e0e0e0",
+                }}
+              >
+                <Tabs
+                  value={activeTab}
+                  onChange={(_, newValue) => setActiveTab(newValue)}
+                  sx={{
+                    "& .MuiTab-root": {
+                      minHeight: 48,
+                      fontSize: "0.875rem",
+                      color: "#666",
+                      "&.Mui-selected": {
+                        color: "#7c3aed",
+                      },
+                    },
+                    "& .MuiTabs-indicator": {
+                      backgroundColor: "#7c3aed",
+                    },
+                  }}
+                >
+                  <Tab icon={<Info size={16} />} label="Info" />
+                  <Tab icon={<MessageCircle size={16} />} label="Chat" />
+                </Tabs>
+              </Box>
+            )}
 
-          {/* Metadata chips */}
-          <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mb: 3 }}>
-            <Chip
-              label={recording.quality.toUpperCase()}
-              size="small"
-              sx={{
-                backgroundColor: getQualityColor(recording.quality),
-                color: "white",
-                fontWeight: 600,
-              }}
-            />
-            <Chip
-              label={`${recording.fps} FPS`}
-              size="small"
-              variant="outlined"
-            />
-            <Chip
-              label={recording.format.toUpperCase()}
-              size="small"
-              variant="outlined"
-            />
-            <Chip
-              label={formatFileSize(recording.size)}
-              size="small"
-              variant="outlined"
-            />
-            <Chip
-              label={`${recording.views} views`}
-              size="small"
-              variant="outlined"
-            />
-          </Stack>
+            {/* Video Info - Always visible on desktop, tab content on mobile */}
+            {(!isMobile || activeTab === 0) && (
+              <Box
+                sx={{
+                  p: 3,
+                  backgroundColor: "white",
+                  color: "#1a1a1a",
+                  flex: isMobile ? "1" : "none",
+                  overflow: "auto",
+                }}
+              >
+                <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
+                  {recording.title}
+                </Typography>
 
-          {/* Tags */}
-          {recording.tags && recording.tags.length > 0 && (
-            <Box sx={{ mb: 2 }}>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                Tags:
-              </Typography>
-              <Stack direction="row" spacing={1} flexWrap="wrap">
-                {recording.tags.map((tag, index) => (
+                {recording.description && (
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mb: 3 }}
+                  >
+                    {recording.description}
+                  </Typography>
+                )}
+
+                {/* Metadata chips */}
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  flexWrap="wrap"
+                  sx={{ mb: 3 }}
+                >
                   <Chip
-                    key={index}
-                    label={tag}
+                    label={recording.quality.toUpperCase()}
+                    size="small"
+                    sx={{
+                      backgroundColor: getQualityColor(recording.quality),
+                      color: "white",
+                      fontWeight: 600,
+                    }}
+                  />
+                  <Chip
+                    label={`${recording.fps} FPS`}
                     size="small"
                     variant="outlined"
-                    sx={{ fontSize: "0.75rem" }}
                   />
-                ))}
-              </Stack>
+                  <Chip
+                    label={recording.format.toUpperCase()}
+                    size="small"
+                    variant="outlined"
+                  />
+                  <Chip
+                    label={formatFileSize(recording.size)}
+                    size="small"
+                    variant="outlined"
+                  />
+                  <Chip
+                    label={`${recording.views} views`}
+                    size="small"
+                    variant="outlined"
+                  />
+                </Stack>
+
+                {/* Tags */}
+                {recording.tags && recording.tags.length > 0 && (
+                  <Box sx={{ mb: 2 }}>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mb: 1 }}
+                    >
+                      Tags:
+                    </Typography>
+                    <Stack direction="row" spacing={1} flexWrap="wrap">
+                      {recording.tags.map((tag, index) => (
+                        <Chip
+                          key={index}
+                          label={tag}
+                          size="small"
+                          variant="outlined"
+                          sx={{ fontSize: "0.75rem" }}
+                        />
+                      ))}
+                    </Stack>
+                  </Box>
+                )}
+              </Box>
+            )}
+
+            {/* Mobile Chat Tab Content */}
+            {isMobile && activeTab === 1 && (
+              <Box sx={{ flex: 1, backgroundColor: "white" }}>
+                <VideoChatPanel
+                  recording={recording}
+                  isPublicView={isPublicView}
+                />
+              </Box>
+            )}
+          </Box>
+
+          {/* Right Sidebar: Chat Panel (Desktop Only) */}
+          {!isMobile && (
+            <Box
+              sx={{
+                width: 380,
+                height: "100%",
+                backgroundColor: "white",
+                borderLeft: "1px solid #e5e7eb",
+                flexShrink: 0,
+                display: "flex",
+                flexDirection: "column",
+                position: "relative",
+              }}
+            >
+              <VideoChatPanel
+                recording={recording}
+                isPublicView={isPublicView}
+                className="clean-chat"
+              />
             </Box>
           )}
         </Box>
       </DialogContent>
 
-      <DialogActions
-        sx={{
-          backgroundColor: "white",
-          px: 3,
-          py: 2,
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        {/* Helper text on the left */}
-        <Box sx={{ color: "text.secondary" }}>
-          <Typography variant="caption" sx={{ fontSize: "0.75rem" }}>
-            Shortcuts: Space/K = Play/Pause, Esc = Close
-          </Typography>
-        </Box>
-
-        {/* Action buttons on the right */}
-        <Box sx={{ display: "flex", gap: 1 }}>
+      {/* Mobile Action Buttons */}
+      {isMobile && (
+        <DialogActions
+          sx={{
+            backgroundColor: "white",
+            px: 3,
+            py: 2,
+            display: "flex",
+            justifyContent: "flex-end",
+            gap: 1,
+            flexShrink: 0,
+          }}
+        >
           <Button
             startIcon={<ExternalLink size={16} />}
             onClick={handleOpenInNewTab}
@@ -373,8 +569,8 @@ export function VideoPlayerModal({
           >
             CLOSE
           </Button>
-        </Box>
-      </DialogActions>
+        </DialogActions>
+      )}
 
       {/* Share Recording Dialog */}
       <ShareRecordingDialog

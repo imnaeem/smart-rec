@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   Box,
   Typography,
@@ -455,6 +456,7 @@ function RecordingCard({
 export default function RecordingsPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [myRecordings, setMyRecordings] = useState<Recording[]>([]);
   const [sharedRecordings, setSharedRecordings] = useState<Recording[]>([]);
   const [activeTab, setActiveTab] = useState<"my" | "shared">("my");
@@ -484,6 +486,180 @@ export default function RecordingsPage() {
   // Ref to track if a load is in progress
   const isLoadingRef = useRef(false);
 
+  const loadRecordings = useCallback(
+    async (isPollingUpdate = false) => {
+      if (!user) return;
+
+      // Prevent multiple simultaneous calls
+      if (isLoadingRef.current) {
+        console.log("🔥 RECORDINGS: Load already in progress, skipping...");
+        return;
+      }
+
+      isLoadingRef.current = true;
+
+      try {
+        console.log("🔥 RECORDINGS: Starting to load recordings...");
+        console.log("🔥 RECORDINGS: User:", user.uid);
+
+        // Only show main loading for initial load, not for polling updates
+        if (!isPollingUpdate) {
+          setLoading(true);
+        } else {
+          setIsPolling(true);
+        }
+
+        console.log(
+          "🔥 RECORDINGS: Calling RecordingUploadService.getUserRecordings()..."
+        );
+        // Get real recordings from server
+        const serverRecordings =
+          await RecordingUploadService.getUserRecordings();
+        console.log(
+          "🔥 RECORDINGS: Server recordings received:",
+          serverRecordings.length
+        );
+
+        console.log("🔥 RECORDINGS: Getting temporary recordings...");
+        // Get temporary recordings from IndexedDB/worker
+        const tempRecordings =
+          await workerUploadService.getTemporaryRecordings();
+        console.log(
+          "🔥 RECORDINGS: Temporary recordings:",
+          tempRecordings.length
+        );
+
+        // Filter out temporary recordings that now exist on server
+        const serverRecordingTitles = new Set(
+          serverRecordings.map((r: Recording) => r.title)
+        );
+        const validTempRecordings = tempRecordings.filter(
+          (temp: Recording) => !serverRecordingTitles.has(temp.title)
+        );
+
+        // Clean up any temporary recordings that are now on server
+        tempRecordings.forEach((temp: Recording) => {
+          if (serverRecordingTitles.has(temp.title)) {
+            workerUploadService.clearTemporaryRecording(temp.id);
+          }
+        });
+
+        // Combine server recordings with valid temporary recordings
+        const allRecordings = [
+          ...validTempRecordings,
+          ...serverRecordings,
+        ].sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+
+        console.log(
+          "🔥 RECORDINGS: Total recordings to display:",
+          allRecordings.length
+        );
+
+        // Only update state if there are actual changes to prevent unnecessary re-renders
+        setMyRecordings((prevRecordings) => {
+          // Check if recordings have actually changed
+          if (prevRecordings.length !== allRecordings.length) {
+            return allRecordings;
+          }
+
+          // More sophisticated comparison: check if any recording has meaningful changes
+          const hasChanges = allRecordings.some((newRec, index) => {
+            const prevRec = prevRecordings[index];
+            if (!prevRec) return true;
+
+            // Only check fields that would cause visual changes
+            const statusChanged = prevRec.status !== newRec.status;
+            const thumbnailChanged = prevRec.thumbnail !== newRec.thumbnail;
+            const titleChanged = prevRec.title !== newRec.title;
+            const viewsChanged = prevRec.views !== newRec.views;
+
+            // For processing recordings, only update if status or thumbnail changed
+            if (newRec.status === "processing") {
+              return statusChanged || thumbnailChanged;
+            }
+
+            // For ready recordings, check all relevant fields
+            return (
+              statusChanged || thumbnailChanged || titleChanged || viewsChanged
+            );
+          });
+
+          return hasChanges ? allRecordings : prevRecordings;
+        });
+
+        // Load shared recordings only on initial load, not during polling
+        // This prevents repeated API calls every 10 seconds
+        if (!isPollingUpdate) {
+          try {
+            console.log("🔥 RECORDINGS: Loading shared recordings...");
+            const authToken = await user.getIdToken();
+            const response = await fetch("/api/recordings/shared", {
+              headers: {
+                Authorization: `Bearer ${authToken}`,
+              },
+            });
+
+            if (response.ok) {
+              const responseData = await response.json();
+              // Handle both direct array and object with sharedRecordings property
+              const sharedRecordingsList = Array.isArray(responseData)
+                ? responseData
+                : responseData.sharedRecordings || [];
+              console.log(
+                "🔥 RECORDINGS: Shared recordings loaded:",
+                sharedRecordingsList.length
+              );
+              setSharedRecordings(sharedRecordingsList);
+            } else {
+              console.warn("Failed to load shared recordings");
+              setSharedRecordings([]);
+            }
+          } catch (sharedError) {
+            console.warn("Error loading shared recordings:", sharedError);
+            setSharedRecordings([]);
+          }
+        }
+
+        // Check if any recordings are still processing
+        const allRecordingsCombined = [
+          ...allRecordings,
+          ...(sharedRecordings || []),
+        ];
+        const hasProcessingRecordings = allRecordingsCombined.some(
+          (r: Recording) => r.status === "processing"
+        );
+
+        // Clear any existing polling timeout
+        if (pollingTimeoutRef.current) {
+          clearTimeout(pollingTimeoutRef.current);
+          pollingTimeoutRef.current = null;
+        }
+
+        if (hasProcessingRecordings) {
+          // Poll for updates every 10 seconds if there are processing recordings (even less aggressive)
+          // Add a small delay to prevent immediate re-polling
+          pollingTimeoutRef.current = setTimeout(() => {
+            loadRecordings(true); // Pass true to indicate this is a polling update
+          }, 10000);
+        }
+      } catch (err) {
+        console.error("🔥 RECORDINGS: Error in loadRecordings:", err);
+        setError(
+          err instanceof Error ? err.message : "Failed to load recordings"
+        );
+      } finally {
+        console.log("🔥 RECORDINGS: Finished loading recordings");
+        setLoading(false);
+        setIsPolling(false);
+        isLoadingRef.current = false; // Reset loading state
+      }
+    },
+    [user]
+  ); // Only depend on user to avoid infinite loops
+
   useEffect(() => {
     if (user) {
       loadRecordings();
@@ -495,170 +671,25 @@ export default function RecordingsPage() {
         clearTimeout(pollingTimeoutRef.current);
       }
     };
-  }, [user]); // Only depend on user, loadRecordings is stable
+  }, [user, loadRecordings]); // Include loadRecordings dependency
 
-  const loadRecordings = async (isPollingUpdate = false) => {
-    if (!user) return;
+  // Handle opening video from notifications
+  useEffect(() => {
+    const openParam = searchParams.get("open");
+    if (openParam && (myRecordings.length > 0 || sharedRecordings.length > 0)) {
+      // Look for the recording in both my recordings and shared recordings
+      const allRecordings = [...myRecordings, ...sharedRecordings];
+      const recordingToOpen = allRecordings.find((r) => r.id === openParam);
 
-    // Prevent multiple simultaneous calls
-    if (isLoadingRef.current) {
-      console.log("🔥 RECORDINGS: Load already in progress, skipping...");
-      return;
+      if (recordingToOpen) {
+        setPlayingRecording(recordingToOpen);
+        // Clear the query parameter by replacing the URL without it
+        const url = new URL(window.location.href);
+        url.searchParams.delete("open");
+        window.history.replaceState({}, "", url.toString());
+      }
     }
-
-    isLoadingRef.current = true;
-
-    try {
-      console.log("🔥 RECORDINGS: Starting to load recordings...");
-      console.log("🔥 RECORDINGS: User:", user.uid);
-
-      // Only show main loading for initial load, not for polling updates
-      if (!isPollingUpdate) {
-        setLoading(true);
-      } else {
-        setIsPolling(true);
-      }
-
-      console.log(
-        "🔥 RECORDINGS: Calling RecordingUploadService.getUserRecordings()..."
-      );
-      // Get real recordings from server
-      const serverRecordings = await RecordingUploadService.getUserRecordings();
-      console.log(
-        "🔥 RECORDINGS: Server recordings received:",
-        serverRecordings.length
-      );
-
-      console.log("🔥 RECORDINGS: Getting temporary recordings...");
-      // Get temporary recordings from IndexedDB/worker
-      const tempRecordings = await workerUploadService.getTemporaryRecordings();
-      console.log(
-        "🔥 RECORDINGS: Temporary recordings:",
-        tempRecordings.length
-      );
-
-      // Filter out temporary recordings that now exist on server
-      const serverRecordingTitles = new Set(
-        serverRecordings.map((r: Recording) => r.title)
-      );
-      const validTempRecordings = tempRecordings.filter(
-        (temp: Recording) => !serverRecordingTitles.has(temp.title)
-      );
-
-      // Clean up any temporary recordings that are now on server
-      tempRecordings.forEach((temp: Recording) => {
-        if (serverRecordingTitles.has(temp.title)) {
-          workerUploadService.clearTemporaryRecording(temp.id);
-        }
-      });
-
-      // Combine server recordings with valid temporary recordings
-      const allRecordings = [...validTempRecordings, ...serverRecordings].sort(
-        (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
-
-      console.log(
-        "🔥 RECORDINGS: Total recordings to display:",
-        allRecordings.length
-      );
-
-      // Only update state if there are actual changes to prevent unnecessary re-renders
-      setMyRecordings((prevRecordings) => {
-        // Check if recordings have actually changed
-        if (prevRecordings.length !== allRecordings.length) {
-          return allRecordings;
-        }
-
-        // More sophisticated comparison: check if any recording has meaningful changes
-        const hasChanges = allRecordings.some((newRec, index) => {
-          const prevRec = prevRecordings[index];
-          if (!prevRec) return true;
-
-          // Only check fields that would cause visual changes
-          const statusChanged = prevRec.status !== newRec.status;
-          const thumbnailChanged = prevRec.thumbnail !== newRec.thumbnail;
-          const titleChanged = prevRec.title !== newRec.title;
-          const viewsChanged = prevRec.views !== newRec.views;
-
-          // For processing recordings, only update if status or thumbnail changed
-          if (newRec.status === "processing") {
-            return statusChanged || thumbnailChanged;
-          }
-
-          // For ready recordings, check all relevant fields
-          return (
-            statusChanged || thumbnailChanged || titleChanged || viewsChanged
-          );
-        });
-
-        return hasChanges ? allRecordings : prevRecordings;
-      });
-
-      // Load shared recordings
-      try {
-        console.log("🔥 RECORDINGS: Loading shared recordings...");
-        const authToken = await user.getIdToken();
-        const response = await fetch("/api/recordings/shared", {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
-        });
-
-        if (response.ok) {
-          const responseData = await response.json();
-          // Handle both direct array and object with sharedRecordings property
-          const sharedRecordingsList = Array.isArray(responseData)
-            ? responseData
-            : responseData.sharedRecordings || [];
-          console.log(
-            "🔥 RECORDINGS: Shared recordings loaded:",
-            sharedRecordingsList.length
-          );
-          setSharedRecordings(sharedRecordingsList);
-        } else {
-          console.warn("Failed to load shared recordings");
-          setSharedRecordings([]);
-        }
-      } catch (sharedError) {
-        console.warn("Error loading shared recordings:", sharedError);
-        setSharedRecordings([]);
-      }
-
-      // Check if any recordings are still processing
-      const allRecordingsCombined = [
-        ...allRecordings,
-        ...(sharedRecordings || []),
-      ];
-      const hasProcessingRecordings = allRecordingsCombined.some(
-        (r: Recording) => r.status === "processing"
-      );
-
-      // Clear any existing polling timeout
-      if (pollingTimeoutRef.current) {
-        clearTimeout(pollingTimeoutRef.current);
-        pollingTimeoutRef.current = null;
-      }
-
-      if (hasProcessingRecordings) {
-        // Poll for updates every 10 seconds if there are processing recordings (even less aggressive)
-        // Add a small delay to prevent immediate re-polling
-        pollingTimeoutRef.current = setTimeout(() => {
-          loadRecordings(true); // Pass true to indicate this is a polling update
-        }, 10000);
-      }
-    } catch (err) {
-      console.error("🔥 RECORDINGS: Error in loadRecordings:", err);
-      setError(
-        err instanceof Error ? err.message : "Failed to load recordings"
-      );
-    } finally {
-      console.log("🔥 RECORDINGS: Finished loading recordings");
-      setLoading(false);
-      setIsPolling(false);
-      isLoadingRef.current = false; // Reset loading state
-    }
-  };
+  }, [searchParams, myRecordings, sharedRecordings]);
 
   const handlePlay = (recording: Recording) => {
     setPlayingRecording(recording);
