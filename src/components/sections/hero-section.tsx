@@ -9,6 +9,7 @@ import {
   Stack,
   Avatar,
   AvatarGroup,
+  Tooltip,
 } from "@mui/material";
 import Link from "next/link";
 import {
@@ -152,7 +153,7 @@ export function HeroSection() {
             >
               <Button
                 component={Link}
-                href="/record"
+                href="/dashboard/record"
                 variant="contained"
                 size="large"
                 endIcon={<ArrowRight size={20} />}
@@ -175,33 +176,35 @@ export function HeroSection() {
                 Start Recording Free
               </Button>
 
-              <Button
-                component={Link}
-                href="/demo"
-                variant="outlined"
-                size="large"
-                startIcon={<Play size={20} />}
-                sx={{
-                  borderWidth: 2,
-                  borderColor: "#a855f7",
-                  color: "#a855f7",
-                  px: 5,
-                  py: 2,
-                  fontSize: "1.125rem",
-                  fontWeight: 600,
-                  borderRadius: 3,
-                  backdropFilter: "blur(10px)",
-                  "&:hover": {
+              <Tooltip title="Coming Soon"> 
+                <Button
+                  href="#"
+                  component={Link}
+                  variant="outlined"
+                  size="large"
+                  startIcon={<Play size={20} />}
+                  sx={{
                     borderWidth: 2,
-                    borderColor: "#9333ea",
-                    backgroundColor: "rgba(168, 85, 247, 0.05)",
-                    transform: "translateY(-2px)",
-                  },
-                  transition: "all 0.3s ease",
-                }}
-              >
-                Watch Demo
-              </Button>
+                    borderColor: "#a855f7",
+                    color: "#a855f7",
+                    px: 5,
+                    py: 2,
+                    fontSize: "1.125rem",
+                    fontWeight: 600,
+                    borderRadius: 3,
+                    backdropFilter: "blur(10px)",
+                    "&:hover": {
+                      borderWidth: 2,
+                      borderColor: "#9333ea",
+                      backgroundColor: "rgba(168, 85, 247, 0.05)",
+                      transform: "translateY(-2px)",
+                    },
+                    transition: "all 0.3s ease",
+                  }}
+                >
+                  Watch Demo
+                </Button>
+              </Tooltip>
             </Stack>
 
             {/* Features List */}

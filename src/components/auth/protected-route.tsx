@@ -4,6 +4,7 @@ import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Box, CircularProgress, Typography } from "@mui/material";
 import { useAuth } from "@/contexts/auth-context";
+import { Loader } from "../ui/loader";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -26,23 +27,7 @@ export function ProtectedRoute({
   }, [user, loading, router, redirectTo]);
 
   if (loading) {
-    return (
-      <Box
-        sx={{
-          height: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          flexDirection: "column",
-          gap: 2,
-        }}
-      >
-        <CircularProgress size={40} sx={{ color: "#a855f7" }} />
-        <Typography variant="body1" color="text.secondary">
-          Loading...
-        </Typography>
-      </Box>
-    );
+    return <Loader />;
   }
 
   if (!user) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { Container, Typography, Button, Box, Stack } from "@mui/material";
+import { Container, Typography, Button, Box, Stack, Tooltip } from "@mui/material";
 import Link from "next/link";
 import { ArrowRight, Play } from "lucide-react";
 
@@ -194,7 +194,7 @@ export function CtaSection() {
           >
             <Button
               component={Link}
-              href="/signup"
+              href="/auth/signup"
               variant="contained"
               size="large"
               endIcon={<ArrowRight size={20} />}
@@ -217,34 +217,35 @@ export function CtaSection() {
             >
               Get Started Free
             </Button>
-
-            <Button
-              component={Link}
-              href="/demo"
-              variant="outlined"
-              size="large"
-              startIcon={<Play size={20} />}
-              sx={{
-                borderColor: "rgba(255, 255, 255, 0.5)",
-                color: "white",
-                fontWeight: 600,
-                px: 5,
-                py: 2,
-                fontSize: "1.125rem",
-                borderRadius: 3,
-                borderWidth: 2,
-                backdropFilter: "blur(10px)",
-                "&:hover": {
-                  borderColor: "white",
-                  backgroundColor: "rgba(255, 255, 255, 0.1)",
+            <Tooltip title="Coming Soon"> 
+              <Button
+                href="#"
+                component={Link}
+                variant="outlined"
+                size="large"
+                startIcon={<Play size={20} />}
+                sx={{
+                  borderColor: "rgba(255, 255, 255, 0.5)",
+                  color: "white",
+                  fontWeight: 600,
+                  px: 5,
+                  py: 2,
+                  fontSize: "1.125rem",
+                  borderRadius: 3,
                   borderWidth: 2,
-                  transform: "translateY(-2px)",
-                },
-                transition: "all 0.3s ease",
-              }}
-            >
-              Watch Demo
-            </Button>
+                  backdropFilter: "blur(10px)",
+                  "&:hover": {
+                    borderColor: "white",
+                    backgroundColor: "rgba(255, 255, 255, 0.1)",
+                    borderWidth: 2,
+                    transform: "translateY(-2px)",
+                  },
+                  transition: "all 0.3s ease",
+                }}
+              >
+                Watch Demo
+              </Button>
+            </Tooltip>
           </Stack>
         </Box>
       </Container>

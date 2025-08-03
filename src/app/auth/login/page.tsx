@@ -6,6 +6,7 @@ import { Container, Box, Typography, Card, CardContent } from "@mui/material";
 import Link from "next/link";
 import { LoginForm } from "@/components/auth/login-form";
 import { useAuth } from "@/contexts/auth-context";
+import { Loader } from "@/components/ui/loader";
 
 function LoginPageContent() {
   const router = useRouter();
@@ -110,7 +111,7 @@ function LoginPageContent() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<Loader />}>
       <LoginPageContent />
     </Suspense>
   );

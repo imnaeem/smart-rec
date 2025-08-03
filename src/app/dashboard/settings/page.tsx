@@ -20,6 +20,7 @@ import { Camera, Save, User, Bell, Shield } from "lucide-react";
 import { DashboardLayout } from "@/components/dashboard/layout";
 import { useAuth } from "@/contexts/auth-context";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { updateProfile } from "firebase/auth";
 
 export default function SettingsPage() {
   const { user, loading: authLoading } = useAuth();
@@ -101,8 +102,9 @@ export default function SettingsPage() {
       setError(null);
       setSuccess(null);
 
+
       // Update Firebase user profile
-      await user.updateProfile({
+      await updateProfile(user, {
         displayName: displayName.trim(),
         photoURL: photoURL,
       });

@@ -47,6 +47,7 @@ import ShareRecordingDialog from "@/components/video/share-recording-dialog";
 import { VideoPlayerModal } from "@/components/video/video-player-modal";
 import { VideoEditorService } from "@/lib/services/video-editor-service";
 import { workerUploadService } from "@/lib/services/worker-upload-service";
+import { Loader } from "@/components/ui/loader";
 
 interface RecordingCardProps {
   recording: Recording;
@@ -1202,7 +1203,7 @@ function RecordingsPageContent() {
 
 export default function RecordingsPage() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<Loader />  }>
       <RecordingsPageContent />
     </Suspense>
   );
