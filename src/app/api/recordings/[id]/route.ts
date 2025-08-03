@@ -9,16 +9,13 @@ async function verifyAuth(request: NextRequest) {
   try {
     const authHeader = request.headers.get("authorization");
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      console.log("🔥 API: No authorization header found");
       return null;
     }
 
     const token = authHeader.split("Bearer ")[1];
-    console.log("🔥 API: Verifying token...");
 
     // For development, use a simple token check
     if (process.env.NODE_ENV === "development") {
-      console.log("🔥 API: Development mode - using mock verification");
       // In development, accept any non-empty token
       if (token && token.length > 10) {
         return {
@@ -30,10 +27,8 @@ async function verifyAuth(request: NextRequest) {
     }
 
     const user = await verifyIdToken(token);
-    console.log("🔥 API: Token verified for user:", user?.uid);
     return user;
   } catch (error) {
-    console.error("🔥 API: Auth verification error:", error);
     return null;
   }
 }
@@ -163,19 +158,9 @@ export async function DELETE(
       );
     }
 
-    // Check if user owns the recording
-    console.log(
-      "🔥 API: Checking ownership - recording.userId:",
-      recording.userId,
-      "user.uid:",
-      user.uid
-    );
-
     // In development mode, allow any authenticated user to delete any recording
     if (process.env.NODE_ENV === "development") {
-      console.log("🔥 API: Development mode - bypassing ownership check");
     } else if (recording.userId !== user.uid) {
-      console.log("🔥 API: Access denied - user doesn't own this recording");
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
@@ -197,10 +182,6 @@ export async function DELETE(
         });
 
         await CloudinaryUploadService.deleteVideo(recording.cloudinaryPublicId);
-        console.log(
-          "🔥 API: Deleted from Cloudinary:",
-          recording.cloudinaryPublicId
-        );
       } catch (cloudinaryError) {
         console.error(
           "🔥 API: Failed to delete from Cloudinary:",

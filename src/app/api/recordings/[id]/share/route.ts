@@ -26,33 +26,19 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    console.log("🔥 API SHARE: PUT /api/recordings/[id]/share called");
     const user = await verifyAuth(request);
 
     if (!user) {
-      console.log("🔥 API SHARE: Authentication failed");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { isPublic } = await request.json();
     const recordingId = params.id;
 
-    console.log("🔥 API SHARE: User authenticated:", {
-      uid: user.uid,
-      email: user.email,
-    });
-    console.log(
-      "🔥 API SHARE: Updating recording:",
-      recordingId,
-      "isPublic:",
-      isPublic
-    );
-
     // Get the recording to verify ownership
     const recording = await RecordingService.getRecording(recordingId);
 
     if (!recording) {
-      console.log("🔥 API SHARE: Recording not found:", recordingId);
       return NextResponse.json(
         { error: "Recording not found" },
         { status: 404 }
@@ -60,10 +46,6 @@ export async function PUT(
     }
 
     if (recording.userId !== user.uid) {
-      console.log("🔥 API SHARE: Access denied - not owner:", {
-        recordingOwner: recording.userId,
-        requestUser: user.uid,
-      });
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -78,7 +60,6 @@ export async function PUT(
         recording.title || "Untitled Recording"
       );
 
-      console.log("🔥 API SHARE: Share status updated successfully");
       return NextResponse.json({
         success: true,
         shareToken: result.shareToken,

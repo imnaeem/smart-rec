@@ -17,7 +17,6 @@ async function verifyAuth(request: NextRequest) {
     const { verifyIdToken } = await import("@/lib/firebase/admin");
     const decodedToken = await verifyIdToken(token);
 
-    console.log("🔥 API: User authenticated:", decodedToken.uid);
     return {
       uid: decodedToken.uid,
       email: decodedToken.email || "",
@@ -32,25 +31,14 @@ async function verifyAuth(request: NextRequest) {
 // GET /api/recordings - Get user's recordings
 export async function GET(request: NextRequest) {
   try {
-    console.log("🔥 API: GET /api/recordings called");
     const user = await verifyAuth(request);
 
     if (!user) {
-      console.log("🔥 API: Authentication failed");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    console.log("🔥 API: User authenticated:", user.uid);
-
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get("limit") || "20");
-
-    console.log(
-      "🔥 API: Fetching recordings for user:",
-      user.uid,
-      "limit:",
-      limit
-    );
 
     // Add timeout to prevent hanging
     const timeoutPromise = new Promise(
@@ -58,7 +46,6 @@ export async function GET(request: NextRequest) {
         setTimeout(() => reject(new Error("Request timeout")), 6000) // 6 second timeout
     );
 
-    console.log("🔥 API: Calling RecordingService.getUserRecordings...");
     const recordingsPromise = RecordingService.getUserRecordings(
       user.uid,
       limit
@@ -69,22 +56,12 @@ export async function GET(request: NextRequest) {
         recordingsPromise,
         timeoutPromise,
       ]);
-      console.log(
-        "🔥 API: Found recordings:",
-        Array.isArray(recordings) ? recordings.length : 0
-      );
-      console.log("🔥 API: Returning recordings to client");
       return NextResponse.json({ recordings }, { status: 200 });
     } catch (firebaseError) {
       const errorMessage =
         firebaseError instanceof Error
           ? firebaseError.message
           : "Unknown error";
-      console.error("🔥 API: Firebase error:", errorMessage);
-      // Return empty array instead of failing
-      console.log(
-        "🔥 API: Returning empty recordings array due to Firebase error"
-      );
       return NextResponse.json({ recordings: [] }, { status: 200 });
     }
   } catch (error) {
@@ -165,9 +142,6 @@ export async function POST(request: NextRequest) {
       cloudinaryPublicId: cloudinaryResult.public_id,
       status: "ready",
     };
-
-    console.log("🔥 API: Recording data to save:", recordingData);
-    console.log("🔥 API: Thumbnail URL:", recordingData.thumbnail);
 
     const recordingId = await RecordingService.createRecordingWithCloudinary(
       user.uid,

@@ -20,11 +20,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(
-      "🔔 API: Creating chat notifications for recording:",
-      recordingId
-    );
-
     // Get users who should receive notifications
     const recipients = await NotificationService.getNotificationRecipients(
       recordingId,
@@ -32,7 +27,6 @@ export async function POST(request: NextRequest) {
     );
 
     if (recipients.length === 0) {
-      console.log("📭 API: No recipients found for notifications");
       return NextResponse.json({ message: "No recipients found" });
     }
 
@@ -52,8 +46,6 @@ export async function POST(request: NextRequest) {
     });
 
     await Promise.all(notificationPromises);
-
-    console.log(`✅ API: Created ${recipients.length} notifications`);
 
     return NextResponse.json({
       message: `Created ${recipients.length} notifications`,

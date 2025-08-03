@@ -140,10 +140,6 @@ class BackgroundUploadService {
     }
 
     tasksToRemove.forEach((taskId) => this.clearTask(taskId));
-
-    if (tasksToRemove.length > 0) {
-      console.log(`🧹 Cleaned up ${tasksToRemove.length} stale upload tasks`);
-    }
   }
 
   // Get memory usage info

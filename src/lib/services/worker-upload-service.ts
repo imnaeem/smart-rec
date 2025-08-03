@@ -74,7 +74,6 @@ class WorkerUploadService {
       };
 
       this.isInitialized = true;
-      console.log("✅ Worker Upload Service initialized");
     } catch (error) {
       console.error("Failed to initialize worker:", error);
     }

@@ -50,10 +50,9 @@ export default function ShareRecordingDialog({
   useEffect(() => {
     const loadShareData = async () => {
       if (recording) {
-        console.log("🔗 SHARE DIALOG: Recording data:", recording);
         setIsPublic(recording.isPublic || false);
         const url = ShareService.generateShareUrl(recording);
-        console.log("🔗 SHARE DIALOG: Generated URL:", url);
+
         setShareUrl(url);
 
         try {
@@ -72,20 +71,12 @@ export default function ShareRecordingDialog({
   const handlePublicToggle = async () => {
     if (!user || !recording) return;
 
-    console.log(
-      "🔗 SHARE DIALOG: Toggling public status for recording:",
-      recording.id
-    );
-    console.log("🔗 SHARE DIALOG: Current user:", user.uid);
-    console.log("🔗 SHARE DIALOG: Current isPublic:", isPublic);
-
     setLoading(true);
     setError("");
     setSuccess("");
 
     try {
       const newPublicStatus = !isPublic;
-      console.log("🔗 SHARE DIALOG: New public status:", newPublicStatus);
 
       const result = await ShareService.updateRecordingPublicStatus(
         recording.id,
@@ -95,8 +86,6 @@ export default function ShareRecordingDialog({
         user.displayName || "",
         recording.title || "Untitled Recording"
       );
-
-      console.log("🔗 SHARE DIALOG: Update successful, result:", result);
 
       // Update local state immediately
       setIsPublic(newPublicStatus);

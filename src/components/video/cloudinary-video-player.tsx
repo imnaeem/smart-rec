@@ -50,9 +50,6 @@ export function CloudinaryVideoPlayer({
 
         // Don't re-initialize if player already exists or is being initialized
         if (playerRef.current || isInitializingRef.current) {
-          console.log(
-            "Player already initialized or initializing, skipping..."
-          );
           return;
         }
 

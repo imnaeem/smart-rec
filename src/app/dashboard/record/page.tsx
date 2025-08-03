@@ -88,7 +88,6 @@ export default function RecordPage() {
   } = useMediaRecorder({
     metadata,
     onRecordingComplete: (blob, duration) => {
-      console.log("Recording complete:", { blob, duration });
       handleAutoSave(blob, duration);
     },
     onError: (error) => {
@@ -116,24 +115,12 @@ export default function RecordPage() {
         duration
       );
 
-      // Start background upload immediately in Web Worker
-      const taskId = await workerUploadService.addUploadTask(
+      await workerUploadService.addUploadTask(
         autoTitle,
         autoDescription,
         blob,
         metadata
       );
-
-      console.log(
-        "Auto-upload started in worker:",
-        taskId,
-        "for recording:",
-        recordingId
-      );
-
-      // Log memory usage
-      const memoryInfo = await workerUploadService.getMemoryInfo();
-      console.log("Worker memory usage:", memoryInfo.usage);
 
       setUploadSuccess(true);
 
@@ -144,7 +131,6 @@ export default function RecordPage() {
       }, 2000);
     } catch (error) {
       console.error("Upload failed:", error);
-      setError(error instanceof Error ? error.message : "Upload failed");
     }
   };
 

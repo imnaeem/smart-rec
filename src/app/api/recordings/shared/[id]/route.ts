@@ -27,26 +27,18 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    console.log("🔥 API SHARED ID: GET /api/recordings/shared/[id] called");
     const user = await verifyAuth(request);
 
     if (!user) {
-      console.log("🔥 API SHARED ID: Authentication failed");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const recordingId = params.id;
-    console.log("🔥 API SHARED ID: User authenticated:", {
-      uid: user.uid,
-      email: user.email,
-    });
-    console.log("🔥 API SHARED ID: Requesting recording:", recordingId);
 
     // Get the recording using Firebase
     const recording = await RecordingService.getRecording(recordingId);
 
     if (!recording) {
-      console.log("🔥 API SHARED ID: Recording not found:", recordingId);
       return NextResponse.json(
         { error: "Recording not found" },
         { status: 404 }
@@ -61,26 +53,17 @@ export async function GET(
     // 2. Private recordings explicitly shared with this user
 
     if (recording.isPublic) {
-      console.log("🔥 API SHARED ID: Recording is public, access granted");
       hasAccess = true;
     } else {
       // For private recordings, check if shared with this user
-      console.log(
-        "🔥 API SHARED ID: Checking email access for private recording"
-      );
       hasAccess = await ShareService.verifyEmailAccess(
         recordingId,
         user.uid,
         user.email
       );
-      console.log("🔥 API SHARED ID: Email access result:", hasAccess);
     }
 
     if (!hasAccess) {
-      console.log(
-        "🔥 API SHARED ID: Access denied for recording:",
-        recordingId
-      );
       return NextResponse.json(
         { error: "This recording is private and not shared with you" },
         { status: 403 }
@@ -103,12 +86,9 @@ export async function GET(
           : undefined,
     };
 
-    console.log(
-      "🔥 API SHARED ID: Returning shared recording:",
-      recording.title
-    );
     return NextResponse.json(accessibleRecording);
   } catch (error) {
+    console.error("🔥 API SHARED ID: Error fetching shared recording:", error);
     console.error("🔥 API SHARED ID: Error fetching shared recording:", error);
     return NextResponse.json(
       { error: "Internal server error" },

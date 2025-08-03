@@ -179,10 +179,6 @@ export class CloudinaryUploadService {
         time: 1,
       });
 
-      console.log("Generated thumbnail URL:", thumbnail);
-      console.log("Public ID:", publicId);
-      console.log("Upload result:", result);
-
       // Test if the thumbnail URL is accessible with retry mechanism
       let thumbnailAccessible = false;
       let retryCount = 0;
@@ -190,19 +186,10 @@ export class CloudinaryUploadService {
 
       while (!thumbnailAccessible && retryCount < maxRetries) {
         try {
-          console.log(
-            `🔥 CLOUDINARY: Testing thumbnail URL (attempt ${retryCount + 1}):`,
-            thumbnail
-          );
           const thumbnailResponse = await fetch(thumbnail, { method: "HEAD" });
-          console.log(
-            "🔥 CLOUDINARY: Thumbnail URL status:",
-            thumbnailResponse.status
-          );
 
           if (thumbnailResponse.ok) {
             thumbnailAccessible = true;
-            console.log("🔥 CLOUDINARY: Thumbnail URL is accessible!");
           } else {
             console.warn(
               `🔥 CLOUDINARY: Thumbnail URL not accessible (attempt ${
@@ -227,18 +214,14 @@ export class CloudinaryUploadService {
               try {
                 const altResponse = await fetch(altThumb, { method: "HEAD" });
                 if (altResponse.ok) {
-                  console.log(
-                    "🔥 CLOUDINARY: Found working thumbnail URL:",
-                    altThumb
-                  );
                   thumbnail = altThumb;
                   thumbnailAccessible = true;
                   break;
                 }
               } catch (error) {
-                console.log(
+                console.error(
                   "🔥 CLOUDINARY: Alternative thumbnail not accessible:",
-                  altThumb
+                  error instanceof Error ? error.message : "Unknown error"
                 );
               }
             }
@@ -249,9 +232,7 @@ export class CloudinaryUploadService {
 
         if (!thumbnailAccessible && retryCount < maxRetries - 1) {
           retryCount++;
-          console.log(
-            `🔥 CLOUDINARY: Waiting 2 seconds before retry ${retryCount + 1}...`
-          );
+
           await new Promise((resolve) => setTimeout(resolve, 2000)); // Wait 2 seconds
         } else {
           retryCount++;
@@ -275,9 +256,6 @@ export class CloudinaryUploadService {
         created_at: result.created_at,
         thumbnail,
       };
-
-      console.log("🔥 CLOUDINARY: Final upload result:", uploadResult);
-      console.log("🔥 CLOUDINARY: Thumbnail URL:", uploadResult.thumbnail);
 
       return uploadResult;
     } catch (error) {
@@ -324,8 +302,6 @@ export class CloudinaryUploadService {
    */
   static async deleteVideo(publicId: string): Promise<void> {
     try {
-      console.log("🔥 CLOUDINARY: Attempting to delete video:", publicId);
-
       // Ensure Cloudinary is configured
       cloudinaryV2.config({
         cloud_name:
@@ -339,10 +315,7 @@ export class CloudinaryUploadService {
         resource_type: "video",
       });
 
-      console.log("🔥 CLOUDINARY: Delete result:", result);
-
       if (result.result === "ok") {
-        console.log("🔥 CLOUDINARY: Successfully deleted video:", publicId);
       } else {
         console.warn("🔥 CLOUDINARY: Unexpected delete result:", result);
       }
@@ -374,36 +347,12 @@ export class CloudinaryUploadService {
       process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "djxesjeff";
 
     try {
-      // Method 1: Use media_lib_thumb transformation (Cloudinary's default thumbnail)
-      const mediaLibThumbUrl = `https://res.cloudinary.com/${cloudName}/video/upload/t_media_lib_thumb/${publicId}`;
-
-      // Method 2: Use custom transformation with offset (preferred)
-      const customThumbUrl = `https://res.cloudinary.com/${cloudName}/video/upload/w_${width},h_${height},c_fill,so_${time},q_auto,f_auto/${publicId}`;
-
-      // Method 3: Use poster frame (first frame)
-      const posterUrl = `https://res.cloudinary.com/${cloudName}/video/upload/w_${width},h_${height},c_fill,q_auto/${publicId}`;
-
-      // Method 4: Use jpg extension (Cloudinary's recommended approach)
-      const jpgThumbUrl = `https://res.cloudinary.com/${cloudName}/video/upload/w_${width},h_${height},c_fill,q_auto,f_jpg/${publicId}.jpg`;
-
-      // Method 5: Use poster frame with jpg (most reliable for your cloud)
-      const posterJpgUrl = `https://res.cloudinary.com/${cloudName}/video/upload/w_${width},h_${height},c_fill,q_auto,f_jpg/${publicId}.jpg`;
-
-      console.log("Generated thumbnail URLs:");
-      console.log("Media lib thumb:", mediaLibThumbUrl);
-      console.log("Custom thumb:", customThumbUrl);
-      console.log("Poster:", posterUrl);
-      console.log("JPG thumb:", jpgThumbUrl);
-      console.log("Poster JPG:", posterJpgUrl);
-
-      // Return the poster JPG URL as primary choice (works with your cloud)
-      return posterJpgUrl;
+      return `https://res.cloudinary.com/${cloudName}/video/upload/w_${width},h_${height},c_fill,q_auto,f_jpg/${publicId}.jpg`;
     } catch (error) {
       console.error("Error generating thumbnail URL:", error);
 
       // Fallback: Use a simple poster frame
       const fallbackUrl = `https://res.cloudinary.com/${cloudName}/video/upload/w_${width},h_${height},c_fill,q_auto/${publicId}`;
-      console.log("Using fallback thumbnail URL:", fallbackUrl);
       return fallbackUrl;
     }
   }

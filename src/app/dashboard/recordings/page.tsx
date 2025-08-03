@@ -492,16 +492,12 @@ export default function RecordingsPage() {
 
       // Prevent multiple simultaneous calls
       if (isLoadingRef.current) {
-        console.log("🔥 RECORDINGS: Load already in progress, skipping...");
         return;
       }
 
       isLoadingRef.current = true;
 
       try {
-        console.log("🔥 RECORDINGS: Starting to load recordings...");
-        console.log("🔥 RECORDINGS: User:", user.uid);
-
         // Only show main loading for initial load, not for polling updates
         if (!isPollingUpdate) {
           setLoading(true);
@@ -509,25 +505,13 @@ export default function RecordingsPage() {
           setIsPolling(true);
         }
 
-        console.log(
-          "🔥 RECORDINGS: Calling RecordingUploadService.getUserRecordings()..."
-        );
         // Get real recordings from server
         const serverRecordings =
           await RecordingUploadService.getUserRecordings();
-        console.log(
-          "🔥 RECORDINGS: Server recordings received:",
-          serverRecordings.length
-        );
 
-        console.log("🔥 RECORDINGS: Getting temporary recordings...");
         // Get temporary recordings from IndexedDB/worker
         const tempRecordings =
           await workerUploadService.getTemporaryRecordings();
-        console.log(
-          "🔥 RECORDINGS: Temporary recordings:",
-          tempRecordings.length
-        );
 
         // Filter out temporary recordings that now exist on server
         const serverRecordingTitles = new Set(
@@ -551,11 +535,6 @@ export default function RecordingsPage() {
         ].sort(
           (a, b) =>
             new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
-
-        console.log(
-          "🔥 RECORDINGS: Total recordings to display:",
-          allRecordings.length
         );
 
         // Only update state if there are actual changes to prevent unnecessary re-renders
@@ -594,7 +573,6 @@ export default function RecordingsPage() {
         // This prevents repeated API calls every 10 seconds
         if (!isPollingUpdate) {
           try {
-            console.log("🔥 RECORDINGS: Loading shared recordings...");
             const authToken = await user.getIdToken();
             const response = await fetch("/api/recordings/shared", {
               headers: {
@@ -608,10 +586,6 @@ export default function RecordingsPage() {
               const sharedRecordingsList = Array.isArray(responseData)
                 ? responseData
                 : responseData.sharedRecordings || [];
-              console.log(
-                "🔥 RECORDINGS: Shared recordings loaded:",
-                sharedRecordingsList.length
-              );
               setSharedRecordings(sharedRecordingsList);
             } else {
               console.warn("Failed to load shared recordings");
@@ -651,7 +625,6 @@ export default function RecordingsPage() {
           err instanceof Error ? err.message : "Failed to load recordings"
         );
       } finally {
-        console.log("🔥 RECORDINGS: Finished loading recordings");
         setLoading(false);
         setIsPolling(false);
         isLoadingRef.current = false; // Reset loading state
@@ -704,10 +677,6 @@ export default function RecordingsPage() {
   };
 
   const handleShare = (recording: Recording) => {
-    console.log(
-      "🔗 RECORDINGS: Share button clicked for recording:",
-      recording
-    );
     setSharingRecording(recording);
   };
 
@@ -754,7 +723,7 @@ export default function RecordingsPage() {
       setSuccess("Recording renamed successfully");
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
-      console.error("Rename failed:", err);
+      console.error("🔥 RECORDINGS: Rename failed:", err);
       setError(
         err instanceof Error ? err.message : "Failed to rename recording"
       );
@@ -817,9 +786,6 @@ export default function RecordingsPage() {
         throw new Error("Authentication required");
       }
 
-      console.log("🔥 RECORDINGS: Deleting recording:", recording.id);
-      console.log("🔥 RECORDINGS: Auth token exists:", !!authToken);
-
       // Call delete API
       const response = await fetch(`/api/recordings/${recording.id}`, {
         method: "DELETE",
@@ -827,8 +793,6 @@ export default function RecordingsPage() {
           Authorization: `Bearer ${authToken}`,
         },
       });
-
-      console.log("🔥 RECORDINGS: Delete response status:", response.status);
 
       if (!response.ok) {
         const errorData = await response.json();

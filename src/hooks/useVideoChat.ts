@@ -222,8 +222,6 @@ export function useVideoChat({
 
         // Create notifications for other users
         try {
-          console.log("🔔 CHAT: Creating notifications for message");
-
           const response = await fetch(`/api/notifications/chat`, {
             method: "POST",
             headers: {
@@ -244,8 +242,6 @@ export function useVideoChat({
               "Failed to create chat notifications:",
               await response.text()
             );
-          } else {
-            console.log("✅ CHAT: Notifications created successfully");
           }
         } catch (notificationError) {
           console.warn("Error creating chat notifications:", notificationError);

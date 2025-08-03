@@ -31,11 +31,10 @@ export class RecordingService {
   // Test Firebase connectivity
   static async testConnection(): Promise<boolean> {
     try {
-      console.log("🔥 FIREBASE: Testing connection...");
       const testCollection = collection(db, "test");
       const testQuery = query(testCollection, limit(1));
       await getDocs(testQuery);
-      console.log("🔥 FIREBASE: Connection test successful");
+
       return true;
     } catch (error) {
       console.error("🔥 FIREBASE: Connection test failed:", error);
@@ -61,11 +60,6 @@ export class RecordingService {
     }
   ): Promise<string> {
     try {
-      console.log(
-        "🔥 FIREBASE: Creating recording with Cloudinary for userId:",
-        userId
-      );
-
       // Create recording document with Cloudinary data
       const recordingData: Omit<Recording, "id"> = {
         userId,
@@ -92,18 +86,10 @@ export class RecordingService {
         status: data.status as Recording["status"],
       };
 
-      console.log("🔥 FIREBASE: Recording data to save:", {
-        userId: recordingData.userId,
-        title: recordingData.title,
-        status: recordingData.status,
-        thumbnail: recordingData.thumbnail,
-      });
-
       const docRef = await addDoc(
         collection(db, RECORDINGS_COLLECTION),
         recordingData
       );
-      console.log("🔥 FIREBASE: Recording created with ID:", docRef.id);
 
       return docRef.id;
     } catch (error) {
@@ -118,8 +104,6 @@ export class RecordingService {
     data: CreateRecordingRequest
   ): Promise<string> {
     try {
-      console.log("🔥 FIREBASE: Creating recording for userId:", userId);
-
       // Upload video file to Firebase Storage
       const fileName = `${userId}_${Date.now()}.${data.file.name
         .split(".")
@@ -133,8 +117,6 @@ export class RecordingService {
 
       const uploadResult = await uploadBytes(storageRef, data.file, metadata);
       const videoUrl = await getDownloadURL(uploadResult.ref);
-
-      console.log("🔥 FIREBASE: Generated video URL:", videoUrl);
 
       // Create recording document
       const recordingData: Omit<Recording, "id"> = {
@@ -162,18 +144,11 @@ export class RecordingService {
         ...(data.editInfo && { editInfo: data.editInfo }),
       };
 
-      console.log("🔥 FIREBASE: Recording data to save:", {
-        userId: recordingData.userId,
-        title: recordingData.title,
-        status: recordingData.status,
-      });
-
       const docRef = await addDoc(
         collection(db, RECORDINGS_COLLECTION),
         recordingData
       );
 
-      console.log("🔥 FIREBASE: Recording created with ID:", docRef.id);
       return docRef.id;
     } catch (error) {
       console.error("🔥 FIREBASE: Error creating recording:", error);
@@ -207,18 +182,6 @@ export class RecordingService {
     limitCount: number = 20
   ): Promise<Recording[]> {
     try {
-      console.log("🔥 FIREBASE: Querying recordings for userId:", userId);
-      console.log("🔥 FIREBASE: Project ID:", db.app.options.projectId);
-      console.log("🔥 FIREBASE: Collection:", RECORDINGS_COLLECTION);
-
-      // Skip connection test for now to avoid blocking
-      // const isConnected = await this.testConnection();
-      // if (!isConnected) {
-      //   console.log("🔥 FIREBASE: Connection test failed, skipping query");
-      //   return [];
-      // }
-
-      console.log("🔥 FIREBASE: Creating Firestore query...");
       const q = query(
         collection(db, RECORDINGS_COLLECTION),
         where("userId", "==", userId),
@@ -226,7 +189,6 @@ export class RecordingService {
         limit(limitCount)
       );
 
-      console.log("🔥 FIREBASE: Executing Firestore query...");
       // Add timeout to Firestore query - reduced for faster UX
       const queryPromise = getDocs(q);
       const timeoutPromise = new Promise<never>((_, reject) =>
@@ -234,11 +196,6 @@ export class RecordingService {
       );
 
       const querySnapshot = await Promise.race([queryPromise, timeoutPromise]);
-      console.log(
-        "🔥 FIREBASE: Query returned",
-        querySnapshot.docs.length,
-        "documents"
-      );
 
       const recordings = querySnapshot.docs.map((doc) => {
         const data = doc.data();
@@ -247,32 +204,12 @@ export class RecordingService {
           ...data,
         } as Recording;
 
-        console.log("🔥 FIREBASE: Loaded recording:", {
-          id: recording.id,
-          title: recording.title,
-          thumbnail: recording.thumbnail,
-        });
-
         return recording;
       });
 
-      console.log("🔥 FIREBASE: Returning recordings:", recordings.length);
       return recordings;
     } catch (error) {
       console.error("🔥 FIREBASE: Error getting user recordings:", error);
-
-      // If we're here, both queries failed - check if it's a connection issue
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
-      if (
-        errorMessage.includes("timeout") ||
-        errorMessage.includes("not-found") ||
-        errorMessage.includes("offline")
-      ) {
-        console.log(
-          "🔥 FIREBASE: Connection issues detected, returning empty array"
-        );
-      }
 
       // Return empty array instead of throwing to prevent API hanging
       return [];
@@ -286,10 +223,6 @@ export class RecordingService {
     updates: UpdateRecordingRequest
   ): Promise<void> {
     try {
-      console.log("🔥 FIREBASE: Updating recording:", recordingId);
-      console.log("🔥 FIREBASE: User ID:", userId);
-      console.log("🔥 FIREBASE: Updates:", updates);
-
       const docRef = doc(db, RECORDINGS_COLLECTION, recordingId);
 
       // Verify ownership
@@ -300,18 +233,13 @@ export class RecordingService {
       }
 
       const recordingData = docSnap.data();
-      console.log("🔥 FIREBASE: Recording data:", recordingData);
-      console.log("🔥 FIREBASE: Recording userId:", recordingData.userId);
-      console.log("🔥 FIREBASE: Requested userId:", userId);
 
       if (recordingData.userId !== userId) {
         console.error("🔥 FIREBASE: Access denied - userId mismatch");
         throw new Error("Access denied");
       }
 
-      console.log("🔥 FIREBASE: Updating document with:", updates);
       await updateDoc(docRef, updates as Partial<Recording>);
-      console.log("🔥 FIREBASE: Update successful");
     } catch (error) {
       console.error("🔥 FIREBASE: Error updating recording:", error);
       throw new Error("Failed to update recording");
@@ -362,7 +290,6 @@ export class RecordingService {
 
       // Delete document from Firestore
       await deleteDoc(docRef);
-      console.log("🔥 FIREBASE: Deleted recording document:", recordingId);
     } catch (error) {
       console.error("Error deleting recording:", error);
       throw new Error("Failed to delete recording");

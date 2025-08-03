@@ -11,17 +11,8 @@ export default function TestFirebasePage() {
   const [recordings, setRecordings] = useState<any[]>([]);
 
   useEffect(() => {
-    console.log("🔥 TEST: Testing Firebase configuration...");
-
-    // Test Firebase app configuration
-    console.log("🔥 TEST: Firebase app config:", {
-      projectId: db.app.options.projectId,
-      authDomain: db.app.options.authDomain,
-    });
-
     // Test authentication
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      console.log("🔥 TEST: Auth state changed:", user ? user.uid : "No user");
       setUser(user);
       setStatus(user ? "Authenticated" : "Not authenticated");
     });
@@ -31,15 +22,9 @@ export default function TestFirebasePage() {
 
   const testFirestore = async () => {
     try {
-      console.log("🔥 TEST: Testing Firestore connection...");
       const testCollection = collection(db, "recordings");
       const testQuery = getDocs(testCollection);
       const snapshot = await testQuery;
-      console.log(
-        "🔥 TEST: Firestore test successful, got",
-        snapshot.docs.length,
-        "documents"
-      );
       setRecordings(
         snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
       );
@@ -55,11 +40,8 @@ export default function TestFirebasePage() {
 
   const testAPI = async () => {
     try {
-      console.log("🔥 TEST: Testing API connection...");
       const response = await fetch("/api/recordings");
-      console.log("🔥 TEST: API response status:", response.status);
-      const data = await response.text();
-      console.log("🔥 TEST: API response:", data);
+      await response.text();
       setStatus("API test completed");
     } catch (error) {
       console.error("🔥 TEST: API test failed:", error);

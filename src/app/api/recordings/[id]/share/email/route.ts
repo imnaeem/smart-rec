@@ -48,19 +48,6 @@ export async function POST(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // Store the share in client-side Firebase (for local development)
-    const shareData = {
-      recordingId,
-      ownerUid: mockUser.uid,
-      ownerEmail: mockUser.email,
-      sharedWithEmail: email,
-      sharedAt: new Date().toISOString(),
-      recordingTitle: recording?.title,
-    };
-
-    // For local development, just log the share request
-    console.log("🔥 API: Share request logged for development:", shareData);
-
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error sharing recording:", error);
@@ -108,13 +95,6 @@ export async function DELETE(
     if (recording?.userId !== mockUser.uid) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
-
-    // For local development, just log the unshare request
-    console.log("🔥 API: Unshare request logged for development:", {
-      recordingId,
-      ownerUid: mockUser.uid,
-      sharedWithEmail: email,
-    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

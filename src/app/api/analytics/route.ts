@@ -16,7 +16,6 @@ async function verifyAuth(request: NextRequest) {
     const { verifyIdToken } = await import("@/lib/firebase/admin");
     const decodedToken = await verifyIdToken(token);
 
-    console.log("🔥 API: User authenticated for analytics:", decodedToken.uid);
     return {
       uid: decodedToken.uid,
       email: decodedToken.email || "",
@@ -35,8 +34,6 @@ export async function GET(request: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
-    console.log("🔥 API: Getting analytics for user:", user.uid);
 
     // Get user's recordings using client-side Firebase
     const recordings = await RecordingService.getUserRecordings(user.uid, 100);

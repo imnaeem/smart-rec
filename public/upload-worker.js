@@ -9,8 +9,6 @@ class UploadWorker {
     this.MAX_MEMORY_MB = 500;
     this.MAX_FILE_SIZE_MB = 200;
     this.TASK_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
-
-    console.log("🔧 Upload Worker initialized");
   }
 
   // Add a new upload task
@@ -93,12 +91,6 @@ class UploadWorker {
     }
 
     tasksToRemove.forEach((taskId) => this.clearTask(taskId));
-
-    if (tasksToRemove.length > 0) {
-      console.log(
-        `🧹 Worker cleaned up ${tasksToRemove.length} stale upload tasks`
-      );
-    }
   }
 
   // Remove task and free memory
@@ -308,5 +300,3 @@ self.addEventListener("message", async (event) => {
 setInterval(() => {
   uploadWorker.cleanupStaleTasks();
 }, 2 * 60 * 1000);
-
-console.log("🚀 Upload Worker ready");

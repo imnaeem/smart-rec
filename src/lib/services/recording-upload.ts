@@ -129,15 +129,11 @@ export class RecordingUploadService {
 
   static async getUserRecordings(): Promise<any[]> {
     try {
-      console.log("🔥 SERVICE: getUserRecordings called");
       // Get auth token from Firebase Auth
       const user = auth.currentUser;
       if (!user) {
-        console.log("🔥 SERVICE: No authenticated user");
         throw new Error("User not authenticated");
       }
-
-      console.log("🔥 SERVICE: User authenticated:", user.uid);
 
       // Check cache first
       const now = Date.now();
@@ -147,22 +143,16 @@ export class RecordingUploadService {
         now - this.cache.timestamp < this.CACHE_DURATION;
 
       if (isCacheValid) {
-        console.log("🔥 SERVICE: Using cached recordings data");
         return this.cache.data!;
       }
 
-      console.log("🔥 SERVICE: Fetching user recordings from API");
       const authToken = await user.getIdToken();
-      console.log("🔥 SERVICE: Got auth token, length:", authToken.length);
 
-      console.log("🔥 SERVICE: Making API call to /api/recordings");
       const response = await fetch("/api/recordings", {
         headers: {
           Authorization: `Bearer ${authToken}`,
         },
       });
-
-      console.log("🔥 SERVICE: API response status:", response.status);
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -171,7 +161,7 @@ export class RecordingUploadService {
       }
 
       const result = await response.json();
-      console.log("🔥 SERVICE: API response data:", result);
+
       const recordings = result.recordings || [];
 
       // Update cache
@@ -181,13 +171,6 @@ export class RecordingUploadService {
         userId: user.uid,
       };
 
-      console.log(
-        "🔥 SERVICE: Got recordings:",
-        recordings.length,
-        "(cached for",
-        this.CACHE_DURATION / 1000,
-        "seconds)"
-      );
       return recordings;
     } catch (error) {
       console.error("🔥 SERVICE: Fetch recordings error:", error);

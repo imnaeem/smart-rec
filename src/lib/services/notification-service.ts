@@ -38,7 +38,6 @@ export class NotificationService {
         collection(db, this.COLLECTION),
         notificationData
       );
-      console.log("✅ NOTIFICATION: Created notification:", docRef.id);
       return docRef.id;
     } catch (error) {
       console.error("❌ NOTIFICATION: Error creating notification:", error);
@@ -53,11 +52,6 @@ export class NotificationService {
     userId: string,
     callback: (notifications: Notification[]) => void
   ): () => void {
-    console.log(
-      "🔔 NOTIFICATION: Setting up real-time listener for user:",
-      userId
-    );
-
     const q = query(
       collection(db, this.COLLECTION),
       where("recipientId", "==", userId),
@@ -81,10 +75,6 @@ export class NotificationService {
           } as Notification);
         });
 
-        console.log(
-          "🔔 NOTIFICATION: Received notifications update:",
-          notifications.length
-        );
         callback(notifications);
       },
       (error) => {
@@ -107,7 +97,6 @@ export class NotificationService {
       await updateDoc(notificationRef, {
         isRead: true,
       });
-      console.log("✅ NOTIFICATION: Marked as read:", notificationId);
     } catch (error) {
       console.error("❌ NOTIFICATION: Error marking as read:", error);
       throw error;
@@ -179,13 +168,6 @@ export class NotificationService {
         }
       });
 
-      console.log("👥 NOTIFICATION: Recording owner:", recording.userId);
-      console.log("👥 NOTIFICATION: Sender ID:", senderId);
-      console.log(
-        "👥 NOTIFICATION: Shared users from DB:",
-        sharedSnapshot.docs.length
-      );
-      console.log("👥 NOTIFICATION: Found recipients:", recipients);
       return recipients;
     } catch (error) {
       console.error("❌ NOTIFICATION: Error getting recipients:", error);

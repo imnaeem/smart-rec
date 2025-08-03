@@ -64,7 +64,7 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
         setShareSuccess(true);
       }
     } catch (error) {
-      console.log("Error sharing:", error);
+      console.error("Error sharing:", error);
       // If clipboard API also fails, show the URL for manual copying
       setShareSuccess(true);
     }

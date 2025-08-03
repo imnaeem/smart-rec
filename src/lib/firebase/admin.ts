@@ -42,21 +42,14 @@ function initializeFirebaseAdmin(): void {
 
     // Method 1: Service Account JSON (Recommended for production)
     if (config.serviceAccountKey) {
-      console.log(
-        "🔧 Initializing Firebase Admin with service account JSON..."
-      );
       const serviceAccount = JSON.parse(config.serviceAccountKey);
       adminApp = initializeApp({
         credential: cert(serviceAccount),
         projectId: config.projectId,
       });
-      console.log("✅ Firebase Admin initialized with service account JSON");
     }
     // Method 2: Individual environment variables
     else if (config.clientEmail && config.privateKey) {
-      console.log(
-        "🔧 Initializing Firebase Admin with service account credentials..."
-      );
       adminApp = initializeApp({
         credential: cert({
           projectId: config.projectId,
@@ -65,30 +58,18 @@ function initializeFirebaseAdmin(): void {
         }),
         projectId: config.projectId,
       });
-      console.log(
-        "✅ Firebase Admin initialized with service account credentials"
-      );
     }
     // Method 3: Google Application Default Credentials (for Google Cloud)
     else if (
       process.env.GOOGLE_APPLICATION_CREDENTIALS ||
       process.env.GCLOUD_PROJECT
     ) {
-      console.log(
-        "🔧 Initializing Firebase Admin with Application Default Credentials..."
-      );
       adminApp = initializeApp({
         projectId: config.projectId,
       });
-      console.log(
-        "✅ Firebase Admin initialized with Application Default Credentials"
-      );
     }
     // Method 4: Development fallback (limited functionality)
     else {
-      console.log(
-        "⚠️ Initializing Firebase Admin in development mode (limited functionality)..."
-      );
       adminApp = initializeApp({
         projectId: config.projectId,
       });
@@ -101,8 +82,6 @@ function initializeFirebaseAdmin(): void {
     adminDb = getFirestore(adminApp);
     adminAuth = getAuth(adminApp);
     isInitialized = true;
-
-    console.log(`🚀 Firebase Admin SDK ready for project: ${config.projectId}`);
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown initialization error";
@@ -141,8 +120,6 @@ function getFirebaseConfig(): FirebaseConfig {
  * Create fallback mock services for development
  */
 function createFallbackServices(): void {
-  console.log("🔧 Creating fallback services for development...");
-
   // Mock Firestore
   adminDb = {
     collection: () => {

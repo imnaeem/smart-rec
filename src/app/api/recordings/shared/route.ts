@@ -24,18 +24,11 @@ async function verifyAuth(request: NextRequest) {
 // Get recordings shared with the current user
 export async function GET(request: NextRequest) {
   try {
-    console.log("🔥 API SHARED: GET /api/recordings/shared called");
     const user = await verifyAuth(request);
 
     if (!user) {
-      console.log("🔥 API SHARED: Authentication failed");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
-    console.log("🔥 API SHARED: User authenticated:", {
-      uid: user.uid,
-      email: user.email,
-    });
 
     try {
       // Get recording IDs shared with this user
@@ -43,13 +36,8 @@ export async function GET(request: NextRequest) {
         user.uid,
         user.email
       );
-      console.log(
-        "🔥 API SHARED: Found shared recording IDs:",
-        sharedRecordingIds.length
-      );
 
       if (sharedRecordingIds.length === 0) {
-        console.log("🔥 API SHARED: No shared recordings found");
         return NextResponse.json([]);
       }
 
@@ -77,10 +65,6 @@ export async function GET(request: NextRequest) {
         }
       }
 
-      console.log(
-        "🔥 API SHARED: Returning shared recordings:",
-        sharedRecordings.length
-      );
       return NextResponse.json(sharedRecordings);
     } catch (shareError) {
       console.error(

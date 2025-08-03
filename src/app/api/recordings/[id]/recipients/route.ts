@@ -41,10 +41,6 @@ export async function GET(
       });
     }
 
-    console.log(
-      `📋 RECIPIENTS: Found ${recipients.length} recipients for recording ${recordingId}`
-    );
-
     return NextResponse.json({
       recipients,
       recordingTitle: recording.title,

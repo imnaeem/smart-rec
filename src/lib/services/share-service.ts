@@ -23,12 +23,6 @@ export class ShareService {
     recordingTitle: string
   ): Promise<void> {
     try {
-      console.log("📧 SHARE: Sharing recording with email:", {
-        recordingId,
-        email,
-        ownerUid,
-      });
-
       // Check if already shared
       const existingQuery = query(
         collection(db, SHARED_RECORDINGS_COLLECTION),
@@ -60,7 +54,6 @@ export class ShareService {
       };
 
       await addDoc(collection(db, SHARED_RECORDINGS_COLLECTION), shareData);
-      console.log("📧 SHARE: Recording shared successfully with:", email);
     } catch (error) {
       console.error("📧 SHARE: Failed to share recording:", error);
       throw error;
@@ -69,8 +62,6 @@ export class ShareService {
 
   static async removeShare(recordingId: string, email: string): Promise<void> {
     try {
-      console.log("🗑️ SHARE: Removing share:", { recordingId, email });
-
       const shareQuery = query(
         collection(db, SHARED_RECORDINGS_COLLECTION),
         where("recordingId", "==", recordingId),
@@ -81,8 +72,6 @@ export class ShareService {
       const shares = await getDocs(shareQuery);
       const deletePromises = shares.docs.map((doc) => deleteDoc(doc.ref));
       await Promise.all(deletePromises);
-
-      console.log("🗑️ SHARE: Removed share for:", email);
     } catch (error) {
       console.error("🗑️ SHARE: Failed to remove share:", error);
       throw error;
@@ -133,12 +122,6 @@ export class ShareService {
     recordingTitle: string
   ): Promise<{ shareToken?: string }> {
     try {
-      console.log("🔗 SHARE: Updating public status:", {
-        recordingId,
-        isPublic,
-        userId,
-      });
-
       let shareToken: string | undefined;
 
       if (isPublic) {
@@ -206,7 +189,6 @@ export class ShareService {
         updatedAt: new Date().toISOString(),
       });
 
-      console.log("🔗 SHARE: Public status updated successfully");
       return { shareToken };
     } catch (error) {
       console.error(
@@ -312,11 +294,6 @@ export class ShareService {
     userEmail: string
   ): Promise<void> {
     try {
-      console.log("🔗 SHARE: Claiming shares for user:", {
-        userUid,
-        userEmail,
-      });
-
       // Find shares by email that don't have a UID yet
       const unclaimedQuery = query(
         collection(db, SHARED_RECORDINGS_COLLECTION),
@@ -333,12 +310,6 @@ export class ShareService {
         .map((doc) => updateDoc(doc.ref, { sharedWithUid: userUid }));
 
       await Promise.all(updatePromises);
-
-      if (updatePromises.length > 0) {
-        console.log(
-          `🔗 SHARE: Claimed ${updatePromises.length} shares for user`
-        );
-      }
     } catch (error) {
       console.error("🔗 SHARE: Failed to claim user shares:", error);
       // Don't throw error as this is a background operation

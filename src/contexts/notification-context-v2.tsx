@@ -38,25 +38,16 @@ export function NotificationProvider({
     }
 
     setIsLoading(true);
-    console.log(
-      "🔔 NOTIFICATION: Setting up real-time listener for user:",
-      user.uid
-    );
 
     const unsubscribe = NotificationService.subscribeToNotifications(
       user.uid,
       (newNotifications) => {
-        console.log(
-          "🔔 NOTIFICATION: Received notifications:",
-          newNotifications.length
-        );
         setNotifications(newNotifications);
         setIsLoading(false);
       }
     );
 
     return () => {
-      console.log("🔔 NOTIFICATION: Cleaning up listener");
       unsubscribe();
     };
   }, [user]);

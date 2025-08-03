@@ -78,11 +78,9 @@ export default function SettingsPage() {
         `profile-pictures/${user.uid}/${Date.now()}_${file.name}`
       );
 
-      console.log("📸 Uploading profile image...");
       const snapshot = await uploadBytes(imageRef, file);
       const downloadURL = await getDownloadURL(snapshot.ref);
 
-      console.log("📸 Image uploaded successfully:", downloadURL);
       setPhotoURL(downloadURL);
       setSuccess("Profile image uploaded successfully!");
     } catch (err) {
