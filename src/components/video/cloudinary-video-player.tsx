@@ -202,12 +202,29 @@ export function CloudinaryVideoPlayer({
         backgroundColor: "#000",
         borderRadius: 1,
         overflow: "hidden",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        // Ensure video fits properly
+        "& .video-js": {
+          width: "100% !important",
+          height: "100% !important",
+        },
+        "& .vjs-tech": {
+          width: "100% !important",
+          height: "100% !important",
+          objectFit: "fill !important",
+        },
         // FIX: Move control bar INSIDE video container with hover behavior
         "& .vjs-control-bar": {
           position: "absolute !important",
-          bottom: "75px !important",
-          opacity: "0 !important",
+          bottom: "0px !important",
+          left: "0 !important",
+          right: "0 !important",
+          opacity: "0.9 !important",
           transition: "opacity 0.3s ease !important",
+          background:
+            "linear-gradient(transparent, rgba(0,0,0,0.7)) !important",
         },
         "&:hover .vjs-control-bar": {
           opacity: "1 !important",

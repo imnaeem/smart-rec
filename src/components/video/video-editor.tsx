@@ -14,6 +14,7 @@ import {
   Chip,
   Alert,
   CircularProgress,
+  Tooltip,
 } from "@mui/material";
 import {
   Play,
@@ -487,25 +488,27 @@ export function VideoEditor({
         <Button onClick={onClose} disabled={isSaving} sx={{ color: "#666" }}>
           Cancel
         </Button>
-        <Button
-          onClick={handleSave}
-          disabled={isSaving || endTime - startTime <= 0}
-          variant="contained"
-          startIcon={
-            isSaving ? (
-              <CircularProgress size={16} color="inherit" />
-            ) : (
-              <Save size={16} />
-            )
-          }
-          sx={{
-            backgroundColor: "#a855f7",
-            "&:hover": { backgroundColor: "#9333ea" },
-            "&:disabled": { backgroundColor: "#e9d5ff" },
-          }}
-        >
-          {isSaving ? "Saving..." : "Save Edited Video"}
-        </Button>
+        <Tooltip title="Coming soon">
+          <Button
+            onClick={handleSave}
+            disabled={true}
+            variant="contained"
+            startIcon={
+              isSaving ? (
+                <CircularProgress size={16} color="inherit" />
+              ) : (
+                <Save size={16} />
+              )
+            }
+            sx={{
+              backgroundColor: "#a855f7",
+              "&:hover": { backgroundColor: "#9333ea" },
+              "&:disabled": { backgroundColor: "#e9d5ff" },
+            }}
+          >
+            {isSaving ? "Saving..." : "Save Edited Video"}
+          </Button>
+        </Tooltip>
       </DialogActions>
     </Dialog>
   );

@@ -113,33 +113,6 @@ export function Sidebar() {
           );
         })}
       </List>
-
-      {/* Storage Usage */}
-      <Box sx={{ p: 3, borderTop: "1px solid #f1f5f9" }}>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-          Storage Used
-        </Typography>
-        <Box
-          sx={{
-            height: 6,
-            backgroundColor: "#f1f5f9",
-            borderRadius: 3,
-            mb: 1,
-          }}
-        >
-          <Box
-            sx={{
-              height: "100%",
-              width: "25%",
-              backgroundColor: "#a855f7",
-              borderRadius: 3,
-            }}
-          />
-        </Box>
-        <Typography variant="caption" color="text.secondary">
-          250 MB of 1 GB used
-        </Typography>
-      </Box>
     </Box>
   );
 }

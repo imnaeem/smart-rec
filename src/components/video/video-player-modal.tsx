@@ -20,7 +20,7 @@ import {
 import { ExternalLink, Share, X, MessageCircle, Info } from "lucide-react";
 
 import type { Recording } from "@/lib/types/recording";
-import { CloudinaryVideoPlayer } from "./cloudinary-video-player-wrapper";
+import { NativeVideoPlayer } from "./native-video-player";
 import ShareRecordingDialog from "./share-recording-dialog";
 import { VideoChatPanel } from "../chat/video-chat-panel";
 import { useAuth } from "@/contexts/auth-context";
@@ -46,22 +46,34 @@ export function VideoPlayerModal({
   const { user } = useAuth();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const [localRecording, setLocalRecording] = useState<Recording | null>(
+    recording
+  );
+
+  // Always call the hook but handle gracefully when not available
   const { setCurrentVideo } = useNotifications();
   const [error, setError] = useState<string | null>(null);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
+
+  // Update local recording state when prop changes
+  useEffect(() => {
+    setLocalRecording(recording);
+  }, [recording]);
   const [activeTab, setActiveTab] = useState(0); // 0 = Info, 1 = Chat
 
   // Track if view count has been incremented for this session
   const viewCountIncrementedRef = useRef(false);
 
-  // Track current video for notifications
+  // Track current video for notifications (only in authenticated views)
   useEffect(() => {
-    if (open && recording) {
-      setCurrentVideo(recording.id);
-    } else {
-      setCurrentVideo(null);
+    if (!isPublicView) {
+      if (open && recording) {
+        setCurrentVideo(recording.id);
+      } else {
+        setCurrentVideo(null);
+      }
     }
-  }, [open, recording, setCurrentVideo]);
+  }, [open, recording, setCurrentVideo, isPublicView]);
 
   // Increment view count when video starts playing
   const incrementViewCount = useCallback(async () => {
@@ -119,7 +131,9 @@ export function VideoPlayerModal({
       // Only handle ESC key, ignore space/k so they work in chat input
       if (event.key === "Escape") {
         event.preventDefault();
-        setCurrentVideo(null); // Clear current video when closing
+        if (!isPublicView) {
+          setCurrentVideo(null); // Clear current video when closing
+        }
         onClose();
       }
     };
@@ -128,7 +142,7 @@ export function VideoPlayerModal({
       document.addEventListener("keydown", handleKeyPress);
       return () => document.removeEventListener("keydown", handleKeyPress);
     }
-  }, [open, onClose, setCurrentVideo]);
+  }, [open, onClose, isPublicView, setCurrentVideo]);
 
   if (!recording) return null;
 
@@ -173,12 +187,12 @@ export function VideoPlayerModal({
       fullWidth
       PaperProps={{
         sx: {
-          backgroundColor: "#000",
-          color: "white",
+          backgroundColor: "white",
+          color: "black",
           borderRadius: 3,
           overflow: "hidden",
-          height: "90vh",
-          maxHeight: "90vh",
+          height: "96vh",
+          maxHeight: "96vh",
         },
       }}
     >
@@ -191,6 +205,7 @@ export function VideoPlayerModal({
           flexDirection: "column",
           overflow: "hidden",
           flex: 1,
+          pb: 1,
         }}
       >
         {/* Close button */}
@@ -201,9 +216,9 @@ export function VideoPlayerModal({
             top: 16,
             right: 16,
             zIndex: 10,
-            backgroundColor: "rgba(0, 0, 0, 0.5)",
-            color: "white",
-            "&:hover": { backgroundColor: "rgba(0, 0, 0, 0.7)" },
+            backgroundColor: "rgba(255, 255, 255, 0.9)",
+            color: "black",
+            "&:hover": { backgroundColor: "rgba(255, 255, 255, 1)" },
           }}
         >
           <X size={20} />
@@ -222,7 +237,11 @@ export function VideoPlayerModal({
           {/* Left Side: Video and Info Content */}
           <Box
             sx={{
-              width: isMobile ? "100%" : "calc(100% - 380px)",
+              width: isMobile
+                ? "100%"
+                : isPublicView
+                ? "100%"
+                : "calc(100% - 380px)",
               display: "flex",
               flexDirection: "column",
               minWidth: 0,
@@ -234,20 +253,25 @@ export function VideoPlayerModal({
               sx={{
                 position: "relative",
                 backgroundColor: "#000",
-                aspectRatio: "16/9",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 overflow: "hidden",
-                height: isMobile ? "250px" : "450px",
-                maxHeight: isMobile ? "250px" : "450px",
+                height: isMobile ? "280px" : "600px",
+                maxHeight: isMobile ? "280px" : "600px",
+                width: "100%",
+                borderRadius: 2,
                 "& > div": {
                   borderRadius: 0,
+                  width: "100%",
+                  height: "100%",
                 },
                 "& video": {
                   display: "block !important",
-                  visibility: "visible !important",
-                  opacity: "1 !important",
+                  width: "100% !important",
+                  height: "100% !important",
+                  objectFit: "contain",
+                  borderRadius: "8px",
                 },
               }}
             >
@@ -268,10 +292,10 @@ export function VideoPlayerModal({
                 </Alert>
               )}
 
-              <CloudinaryVideoPlayer
-                publicId={recording.cloudinaryPublicId}
-                width={isMobile ? 400 : 700}
-                height={isMobile ? 225 : 400}
+              <NativeVideoPlayer
+                videoUrl={localRecording?.videoUrl || ""}
+                width={isMobile ? 480 : 900}
+                height={isMobile ? 280 : 600}
                 autoPlay={true}
                 controls={true}
                 onTimeUpdate={() => {
@@ -282,6 +306,7 @@ export function VideoPlayerModal({
                 }}
                 onPlay={() => {
                   setError(null);
+                  incrementViewCount();
                 }}
                 onPause={() => {}}
               />
@@ -291,8 +316,8 @@ export function VideoPlayerModal({
             {!isMobile && (
               <Box
                 sx={{
-                  px: 3,
-                  py: 2,
+                  px: 2,
+                  py: 1.5,
                   backgroundColor: "white",
                   borderBottom: "1px solid #e0e0e0",
                   display: "flex",
@@ -334,21 +359,6 @@ export function VideoPlayerModal({
                     SHARE
                   </Button>
                 )}
-                <Button
-                  onClick={onClose}
-                  variant="contained"
-                  size="small"
-                  sx={{
-                    backgroundColor: "#7c3aed",
-                    color: "white",
-                    fontWeight: 600,
-                    "&:hover": {
-                      backgroundColor: "#6d28d9",
-                    },
-                  }}
-                >
-                  CLOSE
-                </Button>
               </Box>
             )}
 
@@ -378,7 +388,9 @@ export function VideoPlayerModal({
                   }}
                 >
                   <Tab icon={<Info size={16} />} label="Info" />
-                  <Tab icon={<MessageCircle size={16} />} label="Chat" />
+                  {!isPublicView && (
+                    <Tab icon={<MessageCircle size={16} />} label="Chat" />
+                  )}
                 </Tabs>
               </Box>
             )}
@@ -387,24 +399,28 @@ export function VideoPlayerModal({
             {(!isMobile || activeTab === 0) && (
               <Box
                 sx={{
-                  p: 3,
+                  p: 1.5,
                   backgroundColor: "white",
                   color: "#1a1a1a",
                   flex: isMobile ? "1" : "none",
                   overflow: "auto",
+                  maxHeight: isMobile ? "auto" : "200px",
                 }}
               >
-                <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
-                  {recording.title}
+                <Typography
+                  variant="h6"
+                  sx={{ fontWeight: 700, mb: 1, fontSize: "1rem" }}
+                >
+                  {localRecording?.title}
                 </Typography>
 
-                {recording.description && (
+                {localRecording?.description && (
                   <Typography
                     variant="body2"
                     color="text.secondary"
-                    sx={{ mb: 3 }}
+                    sx={{ mb: 1.5, fontSize: "0.85rem" }}
                   >
-                    {recording.description}
+                    {localRecording?.description}
                   </Typography>
                 )}
 
@@ -413,41 +429,49 @@ export function VideoPlayerModal({
                   direction="row"
                   spacing={1}
                   flexWrap="wrap"
-                  sx={{ mb: 3 }}
+                  sx={{ mb: 1 }}
                 >
                   <Chip
-                    label={recording.quality.toUpperCase()}
+                    label={localRecording?.quality.toUpperCase()}
                     size="small"
                     sx={{
-                      backgroundColor: getQualityColor(recording.quality),
+                      backgroundColor: getQualityColor(
+                        localRecording?.quality || ""
+                      ),
                       color: "white",
                       fontWeight: 600,
+                      fontSize: "0.7rem",
+                      height: "24px",
                     }}
                   />
                   <Chip
-                    label={`${recording.fps} FPS`}
+                    label={`${localRecording?.fps} FPS`}
                     size="small"
                     variant="outlined"
+                    sx={{ fontSize: "0.7rem", height: "24px" }}
                   />
                   <Chip
-                    label={recording.format.toUpperCase()}
+                    label={localRecording?.format.toUpperCase()}
                     size="small"
                     variant="outlined"
+                    sx={{ fontSize: "0.7rem", height: "24px" }}
                   />
                   <Chip
-                    label={formatFileSize(recording.size)}
+                    label={formatFileSize(localRecording?.size || 0)}
                     size="small"
                     variant="outlined"
+                    sx={{ fontSize: "0.7rem", height: "24px" }}
                   />
                   <Chip
-                    label={`${recording.views} views`}
+                    label={`${localRecording?.views} views`}
                     size="small"
                     variant="outlined"
+                    sx={{ fontSize: "0.7rem", height: "24px" }}
                   />
                 </Stack>
 
                 {/* Tags */}
-                {recording.tags && recording.tags.length > 0 && (
+                {localRecording?.tags && localRecording.tags.length > 0 && (
                   <Box sx={{ mb: 2 }}>
                     <Typography
                       variant="body2"
@@ -457,7 +481,7 @@ export function VideoPlayerModal({
                       Tags:
                     </Typography>
                     <Stack direction="row" spacing={1} flexWrap="wrap">
-                      {recording.tags.map((tag, index) => (
+                      {localRecording?.tags?.map((tag, index) => (
                         <Chip
                           key={index}
                           label={tag}
@@ -473,18 +497,20 @@ export function VideoPlayerModal({
             )}
 
             {/* Mobile Chat Tab Content */}
-            {isMobile && activeTab === 1 && (
+            {isMobile && activeTab === 1 && !isPublicView && (
               <Box sx={{ flex: 1, backgroundColor: "white" }}>
-                <VideoChatPanel
-                  recording={recording}
-                  isPublicView={isPublicView}
-                />
+                {localRecording && (
+                  <VideoChatPanel
+                    recording={localRecording}
+                    isPublicView={isPublicView}
+                  />
+                )}
               </Box>
             )}
           </Box>
 
-          {/* Right Sidebar: Chat Panel (Desktop Only) */}
-          {!isMobile && (
+          {/* Right Sidebar: Chat Panel (Desktop Only) - Hidden for public videos */}
+          {!isMobile && !isPublicView && (
             <Box
               sx={{
                 width: 380,
@@ -497,11 +523,13 @@ export function VideoPlayerModal({
                 position: "relative",
               }}
             >
-              <VideoChatPanel
-                recording={recording}
-                isPublicView={isPublicView}
-                className="clean-chat"
-              />
+              {localRecording && (
+                <VideoChatPanel
+                  recording={localRecording}
+                  isPublicView={isPublicView}
+                  className="clean-chat"
+                />
+              )}
             </Box>
           )}
         </Box>
@@ -576,8 +604,15 @@ export function VideoPlayerModal({
       <ShareRecordingDialog
         open={shareDialogOpen}
         onClose={() => setShareDialogOpen(false)}
-        recording={recording}
-        onUpdate={onRecordingUpdate}
+        recording={localRecording}
+        onUpdate={() => {
+          // Update local recording state without triggering parent reload
+          setLocalRecording((prev) =>
+            prev ? { ...prev, isPublic: !prev.isPublic } : null
+          );
+          // Only trigger parent update for view count changes, not public toggle
+          // onRecordingUpdate?.(); // Commented out to prevent dialog reloading
+        }}
       />
     </Dialog>
   );

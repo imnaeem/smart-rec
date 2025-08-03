@@ -56,33 +56,35 @@ export async function GET(request: NextRequest) {
       0
     );
 
-    // Views over time (last 30 days) - calculate from actual recordings
+    // Views over time (last 30 days) - show actual user activity only
     const viewsTimeline = [];
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
+    // Initialize all days with 0 views
     for (let i = 29; i >= 0; i--) {
       const date = new Date();
       date.setDate(date.getDate() - i);
       const dateStr = date.toISOString().split("T")[0];
 
-      // Count views for recordings created on this date (simplified approach)
-      const recordingsOnDate = recordings.filter((recording) => {
-        const recordingDate = new Date(recording.createdAt)
-          .toISOString()
-          .split("T")[0];
-        return recordingDate === dateStr;
-      });
-
-      const totalViewsOnDate = recordingsOnDate.reduce((sum, recording) => {
-        return sum + (recording.views || 0);
-      }, 0);
-
       viewsTimeline.push({
         date: dateStr,
-        views: totalViewsOnDate,
+        views: 0,
       });
     }
+
+    // Add actual views for days when recordings were created
+    recordings.forEach((recording) => {
+      const recordingDate = new Date(recording.createdAt);
+      const recordingDateStr = recordingDate.toISOString().split("T")[0];
+
+      // Find the matching day in our timeline
+      const timelineDay = viewsTimeline.find(
+        (day) => day.date === recordingDateStr
+      );
+      if (timelineDay) {
+        // Add this recording's views to that day
+        timelineDay.views += recording.views || 0;
+      }
+    });
 
     // Recordings by quality
     const qualityStats = recordings.reduce(

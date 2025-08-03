@@ -57,9 +57,28 @@ export function VideoChatPanel({
     );
   }
 
-  // Don't show chat for public views if not authenticated
-  if (isPublicView && !user) {
-    return null;
+  // Disable chat completely for public videos
+  if (isPublicView) {
+    return (
+      <Paper
+        elevation={0}
+        sx={{
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
+          backgroundColor: "#f8fafc",
+          border: "1px solid #e2e8f0",
+          alignItems: "center",
+          justifyContent: "center",
+          p: 3,
+        }}
+        className={className}
+      >
+        <Typography variant="body2" color="text.secondary" textAlign="center">
+          Chat is disabled for public videos
+        </Typography>
+      </Paper>
+    );
   }
 
   if (!user) {

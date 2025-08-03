@@ -116,7 +116,7 @@ export default function ShareRecordingDialog({
           : "Recording is now private"
       );
 
-      // Call onUpdate to notify parent component
+      // Call onUpdate immediately to update parent state
       onUpdate?.();
     } catch (err) {
       console.error("🔗 SHARE DIALOG: Error updating sharing settings:", err);
@@ -173,6 +173,7 @@ export default function ShareRecordingDialog({
       // Clear success message after 3 seconds
       setTimeout(() => setSuccess(""), 3000);
       // Don't call onUpdate for email operations to avoid dialog closing
+      // onUpdate?.(); // Keep commented to prevent modal closing
     } catch (err: unknown) {
       const errorMessage =
         err instanceof Error ? err.message : "Failed to share recording";

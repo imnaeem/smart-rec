@@ -136,9 +136,15 @@ export function NotificationProvider({
 export function useNotifications() {
   const context = useContext(NotificationContext);
   if (!context) {
-    throw new Error(
-      "useNotifications must be used within NotificationProvider"
-    );
+    // Return noop functions for public views where NotificationProvider is not available
+    return {
+      notifications: [],
+      unreadCount: 0,
+      markAsRead: () => {},
+      markAllAsRead: () => {},
+      isLoading: false,
+      setCurrentVideo: () => {},
+    };
   }
   return context;
 }
