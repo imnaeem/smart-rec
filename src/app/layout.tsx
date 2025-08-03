@@ -22,6 +22,9 @@ export const metadata: Metadata = {
     "AI transcription",
   ],
   authors: [{ name: "SmartRec Team" }],
+  icons: {
+    icon: '/favicon.svg',
+  },
 };
 
 export const viewport = {

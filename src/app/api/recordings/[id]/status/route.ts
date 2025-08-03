@@ -17,7 +17,7 @@ export async function PUT(
     const decodedToken = await verifyIdToken(token);
     const userId = decodedToken.uid;
 
-    const recordingId = params.id;
+    const { id: recordingId } = await params;
     const body = await request.json();
     const { status, duration, thumbnail } = body;
 

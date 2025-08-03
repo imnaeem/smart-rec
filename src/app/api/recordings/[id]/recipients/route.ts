@@ -6,7 +6,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const recordingId = params.id;
+    const { id: recordingId } = await params;
 
     if (!recordingId) {
       return NextResponse.json(

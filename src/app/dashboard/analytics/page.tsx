@@ -572,6 +572,8 @@ export default function AnalyticsPage() {
     }
   }, [user]);
 
+
+
   const loadAnalytics = async () => {
     if (!user) return;
 

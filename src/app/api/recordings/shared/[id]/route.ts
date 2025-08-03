@@ -33,7 +33,7 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const recordingId = params.id;
+    const { id: recordingId } = await params;
 
     // Get the recording using Firebase
     const recording = await RecordingService.getRecording(recordingId);

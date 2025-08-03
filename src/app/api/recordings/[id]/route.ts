@@ -147,7 +147,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const recordingId = params.id;
+    const { id: recordingId } = await params;
 
     // Get recording data first to check for Cloudinary public ID
     const recording = await RecordingService.getRecording(recordingId);

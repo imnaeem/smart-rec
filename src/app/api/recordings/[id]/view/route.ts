@@ -33,7 +33,8 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
-    const recordingId = params.id;
+    const { id } = await params;
+    const recordingId = id;
 
     // Get user info if authenticated (optional for public videos)
     const user = await verifyAuth(request);

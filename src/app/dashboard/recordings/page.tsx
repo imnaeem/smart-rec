@@ -646,6 +646,8 @@ export default function RecordingsPage() {
     };
   }, [user, loadRecordings]); // Include loadRecordings dependency
 
+
+
   // Handle opening video from notifications
   useEffect(() => {
     const openParam = searchParams.get("open");

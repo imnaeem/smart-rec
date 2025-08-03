@@ -333,6 +333,8 @@ export default function DashboardPage() {
     }
   }, [user]);
 
+
+
   const loadDashboardData = async () => {
     try {
       setLoading(true);

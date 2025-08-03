@@ -50,6 +50,8 @@ export default function SettingsPage() {
     }
   }, [user]);
 
+
+
   const handleImageUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {

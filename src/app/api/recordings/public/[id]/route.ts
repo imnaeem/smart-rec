@@ -7,7 +7,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const recordingId = params.id;
+    const { id: recordingId } = await params;
 
     // Get the recording using client-side Firebase
     const recording = await RecordingService.getRecording(recordingId);

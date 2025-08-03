@@ -19,7 +19,8 @@ export default function VideoViewPage() {
 
   useEffect(() => {
     const loadRecording = async () => {
-      if (!params.id || !user) return;
+      const { id } = await params;
+      if (!id || !user) return;
 
       try {
         setLoading(true);
@@ -28,7 +29,7 @@ export default function VideoViewPage() {
         // Get recording details
         const recordings = await RecordingUploadService.getUserRecordings();
         const foundRecording = recordings.find(
-          (r: Recording) => r.id === params.id
+          (r: Recording) => r.id === id
         );
 
         if (!foundRecording) {
@@ -47,7 +48,7 @@ export default function VideoViewPage() {
     };
 
     loadRecording();
-  }, [params.id, user]);
+  }, [params, user]);
 
   const handleClose = () => {
     router.push("/dashboard/recordings");

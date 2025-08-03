@@ -33,7 +33,7 @@ export async function PUT(
     }
 
     const { isPublic } = await request.json();
-    const recordingId = params.id;
+    const { id: recordingId } = await params;
 
     // Get the recording to verify ownership
     const recording = await RecordingService.getRecording(recordingId);

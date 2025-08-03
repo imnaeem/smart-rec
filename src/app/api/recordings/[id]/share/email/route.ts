@@ -19,7 +19,7 @@ export async function POST(
     };
 
     const { email } = await request.json();
-    const recordingId = params.id;
+    const { id: recordingId } = await params;
 
     if (!email || typeof email !== "string") {
       return NextResponse.json({ error: "Email is required" }, { status: 400 });
@@ -76,7 +76,7 @@ export async function DELETE(
     };
 
     const { email } = await request.json();
-    const recordingId = params.id;
+    const { id: recordingId } = await params;
 
     if (!email || typeof email !== "string") {
       return NextResponse.json({ error: "Email is required" }, { status: 400 });

@@ -29,14 +29,15 @@ export default function PublicVideoViewPage() {
 
   useEffect(() => {
     const loadRecording = async () => {
-      if (!params.id) return;
+      const { id } = await params;
+      if (!id) return;
 
       try {
         setLoading(true);
         setError(null);
 
         // Try to get public recording (no auth required)
-        const response = await fetch(`/api/recordings/public/${params.id}`);
+        const response = await fetch(`/api/recordings/public/${id}`);
 
         if (response.status === 401) {
           // Recording requires authentication
@@ -48,7 +49,7 @@ export default function PublicVideoViewPage() {
           // Try with authentication
           const authToken = await user.getIdToken();
           const authResponse = await fetch(
-            `/api/recordings/shared/${params.id}`,
+            `/api/recordings/shared/${id}`,
             {
               headers: {
                 Authorization: `Bearer ${authToken}`,
@@ -87,7 +88,9 @@ export default function PublicVideoViewPage() {
     };
 
     loadRecording();
-  }, [params.id, user]);
+  }, [params, user]);
+
+
 
   const handleClose = () => {
     router.push("/");
@@ -136,7 +139,7 @@ export default function PublicVideoViewPage() {
     );
   }
 
-  return (
+    return (
     <>
       <VideoPlayerModal
         open={!!recording}
