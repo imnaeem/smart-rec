@@ -31,8 +31,8 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
     try {
       await login(formData.email, formData.password);
       onSuccess?.();
-    } catch (err: any) {
-      setError(err.message || "Failed to sign in");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to sign in");
     } finally {
       setLoading(false);
     }
@@ -45,8 +45,8 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
     try {
       await loginWithGoogle();
       onSuccess?.();
-    } catch (err: any) {
-      setError(err.message || "Failed to sign in with Google");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to sign in with Google");
     } finally {
       setLoading(false);
     }
