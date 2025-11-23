@@ -1,18 +1,41 @@
 /**
+ * Type guard to check if an error has a code property
+ */
+interface FirebaseAuthError {
+  code?: string;
+  message?: string;
+}
+
+/**
+ * Type guard to check if error is a Firebase auth error
+ */
+function isFirebaseAuthError(error: unknown): error is FirebaseAuthError {
+  return (
+    error !== null &&
+    typeof error === "object" &&
+    ("code" in error || "message" in error)
+  );
+}
+
+/**
  * Maps Firebase authentication error codes to user-friendly messages
  * @param error - The Firebase error object
  * @returns A user-friendly error message
  */
 export function getFirebaseErrorMessage(error: unknown): string {
   // Log the actual error for debugging purposes
-  console.error("Firebase Authentication Error:", {
-    code: error && typeof error === "object" && "code" in error ? error.code : undefined,
-    message: error && typeof error === "object" && "message" in error ? error.message : undefined,
-    fullError: error,
-  });
+  if (isFirebaseAuthError(error)) {
+    console.error("Firebase Authentication Error:", {
+      code: error.code,
+      message: error.message,
+      fullError: error,
+    });
+  } else {
+    console.error("Firebase Authentication Error:", error);
+  }
 
   // Map Firebase error codes to user-friendly messages
-  const errorCode = error && typeof error === "object" && "code" in error ? String(error.code) : "";
+  const errorCode = isFirebaseAuthError(error) ? error.code || "" : "";
 
   switch (errorCode) {
     // Login/Sign-in errors
@@ -61,10 +84,6 @@ export function getFirebaseErrorMessage(error: unknown): string {
 
     default:
       // If error code is not recognized, return a generic message
-      // but still preserve some context if available
-      if (error && typeof error === "object" && "message" in error) {
-        return "An error occurred during authentication. Please try again.";
-      }
-      return "An unexpected error occurred. Please try again.";
+      return "An error occurred during authentication. Please try again.";
   }
 }
