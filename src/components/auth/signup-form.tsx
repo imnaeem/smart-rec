@@ -48,8 +48,8 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
     try {
       await signup(formData.email, formData.password, formData.name);
       onSuccess?.();
-    } catch (err: any) {
-      setError(err.message || "Failed to create account");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create account");
     } finally {
       setLoading(false);
     }
@@ -62,8 +62,8 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
     try {
       await loginWithGoogle();
       onSuccess?.();
-    } catch (err: any) {
-      setError(err.message || "Failed to sign up with Google");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to sign up with Google");
     } finally {
       setLoading(false);
     }
